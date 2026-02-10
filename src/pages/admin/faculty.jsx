@@ -94,6 +94,7 @@ function Faculty() {
       >
         Add Faculty ➕
       </Link>
+      <br />
       <h1 className="text-xl font-semibold mb-3">Faculties</h1>
 
       {isLoading ? (
@@ -112,8 +113,9 @@ function Faculty() {
           {faculties.map((faculty) => (
             <li
               key={faculty.id}
-              className="flex justify-between items-center p-3 bg-gray-50 border border-gray-200 rounded-lg hover:shadow-sm transition-shadow"
+              className="flex flex-col md:flex-row gap-2 md:gap-0 justify-between items-center p-3 bg-gray-50 border border-gray-200 rounded-lg hover:shadow-sm transition-shadow"
             >
+              {/* Faculty name and abbreviation */}
               <div className="flex flex-col">
                 <span className="font-medium text-gray-800">
                   {faculty.name}
@@ -122,6 +124,7 @@ function Faculty() {
                   {faculty.abbreviation}
                 </span>
               </div>
+              {/* Edit and Delete buttons */}
               <div className="flex gap-2">
                 <button
                   onClick={() => handleEdit(faculty)}

@@ -12,7 +12,10 @@ export default function TopBar() {
   };
 
   return (
-    <div className="flex justify-end p-4 pr-8 border-b bg-white">
+    <div className="ml-75 flex justify-between p-4 pr-8 border-b bg-white">
+      <h1 className="flex text-lg font-semibold text-center text-indigo-500">
+        University Student Undergraduate Result Management System
+      </h1>
       <button
         onClick={logout}
         className="text-red-500 bg-gray-200 px-4 py-2 rounded-lg cursor-pointer"
