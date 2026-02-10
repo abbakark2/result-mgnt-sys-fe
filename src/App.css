@@ -1,0 +1,25 @@
+.myborder{
+  border:solid 4px red;
+}
+.blue-b{
+  border:solid 4px rgb(38, 0, 255);
+}
+.green-b{
+  border:solid 4px rgb(8, 81, 3);
+}
+input{
+  border:solid 1px rgb(34, 40, 69);
+  border-radius: 8px;
+  padding:10px;
+}
+
+.login-container{
+  max-width: 570px;
+  margin:5rem auto;
+}
+p.txt-sm{
+  font-size: small;
+}
+.h-wrap{
+  height: max-content;
+}
