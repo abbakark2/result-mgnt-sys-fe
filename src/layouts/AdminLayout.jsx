@@ -33,7 +33,7 @@ function AdminLayout() {
 
       <div className="flex-1 flex flex-col">
         <TopBar />
-        <main className="flex-1 md:ml-75 min-h-screen p-6 overflow-y-auto">
+        <main className="flex-1 ml-0 md:ml-75 min-h-screen p-6 overflow-y-auto">
           <Outlet />
         </main>
       </div>

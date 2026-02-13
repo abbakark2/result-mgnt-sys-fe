@@ -1,4 +1,8 @@
 import React, { useState, useEffect } from "react";
+import axiosClient from "../../axios-client";
+import { toast } from "react-toastify";
+import { useDispatch, useSelector } from "react-redux";
+import { facultyActions } from "../../store/faculty-slice";
 
 const DepartmentModal = ({
   isOpen,
@@ -10,13 +14,30 @@ const DepartmentModal = ({
   const [formData, setFormData] = useState({
     name: "",
     faculty_id: "",
+    faculty: "",
   });
 
+  const faculties = useSelector((state) => state.faculty.faculties);
+  const dispatch = useDispatch();
+
+  const fetchFaculties = async () => {
+    const res = await axiosClient.get("/admin/faculties");
+    if (res.data && res.data.Faculties) {
+      dispatch(facultyActions.setFaculties(res.data.Faculties));
+      toast.success("Faculties fetched successfully");
+    } else {
+      toast.error("Failed to fetch faculties");
+    }
+  };
+
   useEffect(() => {
+    fetchFaculties();
+
     if (initialData) {
       setFormData({
         name: initialData.name || "",
         faculty_id: initialData.faculty_id || "",
+        faculty: initialData.faculty.name || "",
       });
     }
   }, [initialData, isOpen]);
@@ -63,17 +84,25 @@ const DepartmentModal = ({
 
           <div>
             <label className="block text-sm font-medium mb-1 text-gray-700">
-              Faculty ID
+              Faculty
             </label>
-            <input
-              type="number"
+            <select
               name="faculty_id"
-              required
-              disabled={isSubmitting}
-              value={formData.faculty_id}
+              id="faculty_id"
               onChange={handleChange}
               className="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-gray-100"
-            />
+            >
+              <option value="">Select Faculty</option>
+              {faculties.map((faculty) => (
+                <option
+                  key={faculty.id}
+                  value={faculty.id}
+                  selected={faculty.id === formData.faculty_id}
+                >
+                  {faculty.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="flex justify-end space-x-2 pt-2">

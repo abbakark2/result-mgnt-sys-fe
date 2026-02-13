@@ -3,7 +3,7 @@ import { FiUsers } from "react-icons/fi";
 
 function StatCard() {
   return (
-    <div className="flex h-[100px] p-4 my-4 bg-white rounded-xl  shadow-lg">
+    <div className="flex h-25 p-4 my-4 bg-white rounded-xl  shadow-lg">
       <div className="flex gap-4 ">
         <div className="flex gap-2">
           <div>

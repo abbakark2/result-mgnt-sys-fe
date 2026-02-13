@@ -12,7 +12,7 @@ export default function TopBar() {
   };
 
   return (
-    <div className="ml-75 flex justify-between p-4 pr-8 border-b bg-white">
+    <div className="ml-0 md:ml-75 flex justify-between p-4 pr-8 border-b bg-white">
       <h1 className="flex text-lg font-semibold text-center text-indigo-500">
         University Student Undergraduate Result Management System
       </h1>

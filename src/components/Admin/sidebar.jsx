@@ -107,11 +107,11 @@ function Sidebar() {
             <div
               className={`overflow-hidden transition-all duration-500 ease-in-out ${
                 academicStructureOpen
-                  ? "max-h-40 opacity-100 mt-2"
+                  ? "max-h-50 opacity-100 mt-2"
                   : "max-h-0 opacity-0"
               }`}
             >
-              <div className="pl-6 space-y-1 border-l-2 border-white/10 ml-6">
+              <div className="pl-6  border-l-2 border-white/10 ml-6">
                 <NavLink to="/admin/faculty" className={navItemClass}>
                   <FiLayers />
                   <span className="text-sm">Faculties</span>
@@ -121,19 +121,18 @@ function Sidebar() {
                   <FiUsers />
                   <span className="text-sm">Departments</span>
                 </NavLink>
+                <NavLink to="/admin/students" className={navItemClass}>
+                  <FiUsers className="text-lg" />
+                  <span className="font-medium">Students</span>
+                </NavLink>
+
+                <NavLink to="/admin/courses" className={navItemClass}>
+                  <FiBook className="text-lg" />
+                  <span className="font-medium">Courses</span>
+                </NavLink>
               </div>
             </div>
           </div>
-
-          <NavLink to="/admin/students" className={navItemClass}>
-            <FiUsers className="text-lg" />
-            <span className="font-medium">Students</span>
-          </NavLink>
-
-          <NavLink to="/admin/courses" className={navItemClass}>
-            <FiBook className="text-lg" />
-            <span className="font-medium">Courses</span>
-          </NavLink>
 
           <NavLink to="/admin/uploads" className={navItemClass}>
             <FiUpload className="text-lg" />
