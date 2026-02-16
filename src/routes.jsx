@@ -8,6 +8,7 @@ import AdminLayout from "./layouts/AdminLayout";
 import Faculty from "./pages/admin/faculty";
 import AddFaculty from "./pages/admin/add-faculty";
 import Department from "./pages/admin/department";
+import Student from "./pages/admin/student";
 
 function AppRoutes() {
   return (
@@ -24,6 +25,8 @@ function AppRoutes() {
             <Route path="/admin/faculty/add" element={<AddFaculty />} />
             {/* DEPARTMENTS ROUTES */}
             <Route path="/admin/department" element={<Department />} />
+            {/* STUDENTS ROUTES */}
+            <Route path="/admin/students" element={<Student />} />
           </Route>
         </Route>
 

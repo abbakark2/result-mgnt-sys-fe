@@ -89,16 +89,13 @@ const DepartmentModal = ({
             <select
               name="faculty_id"
               id="faculty_id"
+              value={formData.faculty_id || ""} // Use value prop instead of selected
               onChange={handleChange}
               className="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-gray-100"
             >
               <option value="">Select Faculty</option>
               {faculties.map((faculty) => (
-                <option
-                  key={faculty.id}
-                  value={faculty.id}
-                  selected={faculty.id === formData.faculty_id}
-                >
+                <option key={faculty.id} value={faculty.id}>
                   {faculty.name}
                 </option>
               ))}
@@ -117,7 +114,7 @@ const DepartmentModal = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded transition-colors disabled:bg-indigo-300 flex items-center justify-center min-w-[120px]"
+              className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded transition-colors disabled:bg-indigo-300 flex items-center justify-center min-w-30"
             >
               {isSubmitting ? (
                 <>

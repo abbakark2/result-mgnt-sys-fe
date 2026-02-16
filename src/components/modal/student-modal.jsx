@@ -1,0 +1,584 @@
+import React, { useState, useEffect } from "react";
+import { toast } from "react-toastify";
+import axiosClient from "../../axios-client";
+import {
+  useGetFacultiesQuery,
+  useGetDepartmentsByFacultyQuery,
+} from "../../store/apiSlice";
+import { X, Loader2, ChevronDown } from "lucide-react";
+
+const INITIAL_FORM = {
+  name: "",
+  email: "",
+  phone: "",
+  matric_number: "",
+  admission_year: "",
+  graduation_year: "",
+  current_level: "",
+  mode_entry: "UTME",
+  status: "active",
+  middle_name: "",
+  date_of_birth: "",
+  gender: "",
+  faculty_id: "",
+  department_id: "",
+};
+
+const CURRENT_YEAR = new Date().getFullYear();
+
+function FieldError({ message }) {
+  if (!message) return null;
+  return (
+    <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+      <span className="inline-block w-1 h-1 rounded-full bg-red-500" />
+      {message}
+    </p>
+  );
+}
+
+function FormField({ label, required, error, children }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
+        {label}
+        {required && <span className="text-rose-500 ml-0.5">*</span>}
+      </label>
+      {children}
+      <FieldError message={error} />
+    </div>
+  );
+}
+
+const inputClass = (hasError) =>
+  `w-full px-3 py-2.5 text-sm bg-slate-50 border rounded-lg outline-none transition-all duration-200
+   placeholder:text-slate-400 text-slate-800
+   focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400
+   ${hasError ? "border-rose-400 bg-rose-50/30" : "border-slate-200 hover:border-slate-300"}`;
+
+const selectClass = (hasError) =>
+  `${inputClass(hasError)} appearance-none cursor-pointer pr-9`;
+
+function SelectWrapper({ children, isLoading }) {
+  return (
+    <div className="relative">
+      {children}
+      <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+        {isLoading ? (
+          <Loader2 className="w-4 h-4 text-slate-400 animate-spin" />
+        ) : (
+          <ChevronDown className="w-4 h-4 text-slate-400" />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function StudentModal({
+  isOpen,
+  onClose,
+  initialData,
+  isSubmitting,
+  setIsSubmitting,
+  fetchStudents,
+}) {
+  const [formData, setFormData] = useState(INITIAL_FORM);
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
+
+  const isEditMode = Boolean(initialData?.id);
+
+  const { data: facultiesData, isLoading: isFacultiesLoading } =
+    useGetFacultiesQuery();
+
+  const faculties = Array.isArray(facultiesData?.data)
+    ? facultiesData.data
+    : Array.isArray(facultiesData)
+      ? facultiesData
+      : [];
+
+  const { data: departmentsData, isLoading: isDepartmentsLoading } =
+    useGetDepartmentsByFacultyQuery(formData.faculty_id, {
+      skip: !formData.faculty_id,
+    });
+
+  const departments = Array.isArray(departmentsData?.faculty?.departments)
+    ? departmentsData.faculty.departments
+    : Array.isArray(departmentsData)
+      ? departmentsData
+      : [];
+
+  useEffect(() => {
+    if (isOpen) {
+      setFormData(
+        initialData?.id ? { ...INITIAL_FORM, ...initialData } : INITIAL_FORM,
+      );
+      setErrors({});
+      setTouched({});
+    }
+  }, [isOpen, initialData]);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (touched[name]) validateField(name, value);
+  };
+
+  const handleFacultyChange = (e) => {
+    const { value } = e.target;
+    setFormData((prev) => ({ ...prev, faculty_id: value, department_id: "" }));
+    if (touched.faculty_id) validateField("faculty_id", value);
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+    validateField(name, value);
+  };
+
+  const validateField = (name, value) => {
+    let error = "";
+    switch (name) {
+      case "name":
+        if (!value || value.trim().length < 3)
+          error = "Name must be at least 3 characters.";
+        break;
+      case "email":
+        if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
+          error = "Invalid email address.";
+        break;
+      case "phone":
+        if (value && !/^\+?[\d\s\-()]{7,15}$/.test(value))
+          error = "Invalid phone number.";
+        break;
+      case "matric_number":
+        if (!value || value.trim().length < 5)
+          error = "Matric number must be at least 5 characters.";
+        break;
+      case "admission_year":
+        if (!value || value < 1900 || value > CURRENT_YEAR)
+          error = "Enter a valid admission year.";
+        break;
+      case "graduation_year":
+        if (
+          value &&
+          (Number(value) < Number(formData.admission_year) ||
+            value > CURRENT_YEAR + 10)
+        )
+          error = "Graduation year must be after admission year.";
+        break;
+      case "current_level":
+        if (!value) error = "Current level is required.";
+        break;
+      case "date_of_birth":
+        if (!value) error = "Date of birth is required.";
+        break;
+      case "gender":
+        if (!value) error = "Gender is required.";
+        break;
+      case "faculty_id":
+        if (!value) error = "Faculty is required.";
+        break;
+      case "department_id":
+        if (!value) error = "Department is required.";
+        break;
+      default:
+        break;
+    }
+    setErrors((prev) => ({ ...prev, [name]: error }));
+    return !error;
+  };
+
+  const validateAll = () => {
+    const fields = [
+      "name",
+      "matric_number",
+      "admission_year",
+      "graduation_year",
+      "current_level",
+      "date_of_birth",
+      "gender",
+      "faculty_id",
+      "department_id",
+      "email",
+      "phone",
+    ];
+    let valid = true;
+    const allTouched = {};
+    fields.forEach((f) => {
+      allTouched[f] = true;
+      if (!validateField(f, formData[f])) valid = false;
+    });
+    setTouched(allTouched);
+    return valid;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateAll()) return;
+    setIsSubmitting(true);
+    try {
+      if (isEditMode) {
+        await axiosClient.put(`/admin/students/${initialData.id}`, formData);
+        toast.success("Student updated successfully");
+      } else {
+        await axiosClient.post("/admin/students", formData);
+        toast.success("Student added successfully");
+      }
+      onClose();
+      await fetchStudents();
+    } catch (error) {
+      const msg =
+        error.response?.data?.message || "An error occurred while saving.";
+      toast.error(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ fontFamily: "'DM Sans', 'Segoe UI', system-ui, sans-serif" }}
+    >
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300"
+        onClick={!isSubmitting ? onClose : undefined}
+      />
+
+      {/* Modal Panel */}
+      <div
+        className="relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl shadow-slate-900/20 flex flex-col"
+        style={{ maxHeight: "92vh" }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+          <div>
+            <h2 className="text-lg font-bold text-slate-800 tracking-tight">
+              {isEditMode ? "Edit Student Record" : "Register New Student"}
+            </h2>
+            <p className="text-xs text-slate-400 mt-0.5">
+              {isEditMode
+                ? "Update the student's information below."
+                : "Fill in the details to register a new student."}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={!isSubmitting ? onClose : undefined}
+            disabled={isSubmitting}
+            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors duration-150 disabled:opacity-40"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Scrollable Body */}
+        <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
+          {/* Section: Personal Info */}
+          <section>
+            <p className="text-xs font-bold uppercase tracking-widest text-indigo-500 mb-3">
+              Personal Information
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <FormField label="Full Name" required error={errors.name}>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    placeholder="e.g. Aminu Bello"
+                    className={inputClass(errors.name)}
+                  />
+                </FormField>
+              </div>
+
+              <FormField
+                label="Date of Birth"
+                required
+                error={errors.date_of_birth}
+              >
+                <input
+                  type="date"
+                  name="date_of_birth"
+                  value={formData.date_of_birth}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className={inputClass(errors.date_of_birth)}
+                />
+              </FormField>
+
+              {/* Gender */}
+              <FormField label="Gender" required error={errors.gender}>
+                <SelectWrapper>
+                  <select
+                    name="gender"
+                    value={formData.gender}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={selectClass(errors.gender)}
+                  >
+                    <option value="">Select gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </SelectWrapper>
+              </FormField>
+
+              {/* Email */}
+              <FormField label="Email Address" error={errors.email}>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  placeholder="student@university.edu"
+                  className={inputClass(errors.email)}
+                />
+              </FormField>
+
+              {/* Phone Number */}
+              <FormField label="Phone Number" error={errors.phone}>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone || ""}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  placeholder="+234 800 000 0000"
+                  className={inputClass(errors.phone)}
+                />
+              </FormField>
+            </div>
+          </section>
+
+          <div className="border-t border-slate-100" />
+
+          {/* Section: Academic Info */}
+          <section>
+            <p className="text-xs font-bold uppercase tracking-widest text-indigo-500 mb-3">
+              Academic Information
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                {/* Metric Number */}
+                <FormField
+                  label="Matric Number"
+                  required
+                  error={errors.matric_number}
+                >
+                  <input
+                    type="text"
+                    name="matric_number"
+                    value={formData.matric_number}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    placeholder="e.g. UNI/2021/001"
+                    className={inputClass(errors.matric_number)}
+                  />
+                </FormField>
+              </div>
+
+              {/* Faculty */}
+              <FormField label="Faculty" required error={errors.faculty_id}>
+                <SelectWrapper isLoading={isFacultiesLoading}>
+                  <select
+                    name="faculty_id"
+                    value={formData.faculty_id}
+                    onChange={handleFacultyChange}
+                    onBlur={handleBlur}
+                    disabled={isFacultiesLoading}
+                    className={selectClass(errors.faculty_id)}
+                  >
+                    <option value="">
+                      {isFacultiesLoading
+                        ? "Loading faculties…"
+                        : "Select faculty"}
+                    </option>
+                    {facultiesData?.Faculties.map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.name}
+                      </option>
+                    ))}
+                  </select>
+                </SelectWrapper>
+              </FormField>
+
+              {/* Departments */}
+              <FormField
+                label="Department"
+                required
+                error={errors.department_id}
+              >
+                <SelectWrapper isLoading={isDepartmentsLoading}>
+                  <select
+                    name="department_id"
+                    value={formData.department_id}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    disabled={!formData.faculty_id || isDepartmentsLoading}
+                    className={selectClass(errors.department_id)}
+                  >
+                    <option value="">
+                      {!formData.faculty_id
+                        ? "Select a faculty first"
+                        : isDepartmentsLoading
+                          ? "Loading departments…"
+                          : "Select department"}
+                    </option>
+                    {departments.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.name}
+                      </option>
+                    ))}
+                  </select>
+                </SelectWrapper>
+              </FormField>
+
+              <FormField
+                label="Admission Year"
+                required
+                error={errors.admission_year}
+              >
+                <input
+                  type="number"
+                  name="admission_year"
+                  value={formData.admission_year}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  placeholder={`e.g. ${CURRENT_YEAR - 2}`}
+                  min="1900"
+                  max={CURRENT_YEAR}
+                  className={inputClass(errors.admission_year)}
+                />
+              </FormField>
+
+              <FormField label="Graduation Year" error={errors.graduation_year}>
+                <input
+                  type="number"
+                  name="graduation_year"
+                  value={formData.graduation_year}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  placeholder={`e.g. ${CURRENT_YEAR + 3}`}
+                  min="1900"
+                  max={CURRENT_YEAR + 10}
+                  className={inputClass(errors.graduation_year)}
+                />
+              </FormField>
+
+              <FormField
+                label="Current Level"
+                required
+                error={errors.current_level}
+              >
+                <SelectWrapper>
+                  <select
+                    name="current_level"
+                    value={formData.current_level}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={selectClass(errors.current_level)}
+                  >
+                    <option value="">Select level</option>
+                    {[100, 200, 300, 400, 500].map((lvl) => (
+                      <option key={lvl} value={lvl}>
+                        {lvl} Level
+                      </option>
+                    ))}
+                  </select>
+                </SelectWrapper>
+              </FormField>
+
+              <FormField
+                label="Mode of Entry"
+                required
+                error={errors.mode_entry}
+              >
+                <SelectWrapper>
+                  <select
+                    name="mode_entry"
+                    value={formData.mode_entry}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={selectClass(errors.mode_entry)}
+                  >
+                    <option value="UTME">UTME</option>
+                    <option value="DE">Direct Entry</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </SelectWrapper>
+              </FormField>
+
+              <FormField label="Status" required error={errors.status}>
+                <SelectWrapper>
+                  <select
+                    name="status"
+                    value={formData.status}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={selectClass(errors.status)}
+                  >
+                    <option value="active">Active</option>
+                    <option value="spillover">Spillover</option>
+                    <option value="graduated">Graduated</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </SelectWrapper>
+              </FormField>
+            </div>
+          </section>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50/70 rounded-b-2xl gap-3">
+          <p className="text-xs text-slate-400">
+            <span className="text-rose-500">*</span> Required fields
+          </p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200
+                         rounded-lg hover:bg-slate-100 transition-all duration-150 disabled:opacity-40"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="px-5 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg
+                         hover:bg-indigo-700 active:scale-95 transition-all duration-150
+                         disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2 min-w-[90px] justify-center"
+            >
+              {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+              {isSubmitting ? "Saving…" : isEditMode ? "Update" : "Register"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default StudentModal;

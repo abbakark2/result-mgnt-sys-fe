@@ -1,25 +1,48 @@
-.myborder{
-  border:solid 4px red;
+.myborder {
+  border: solid 4px red;
 }
-.blue-b{
-  border:solid 4px rgb(38, 0, 255);
+.blue-b {
+  border: solid 4px rgb(38, 0, 255);
 }
-.green-b{
-  border:solid 4px rgb(8, 81, 3);
+.green-b {
+  border: solid 4px rgb(8, 81, 3);
 }
-input{
-  border:solid 1px rgb(34, 40, 69);
+input {
+  border: solid 1px rgb(34, 40, 69);
   border-radius: 8px;
-  padding:10px;
+  padding: 10px;
 }
 
-.login-container{
+.login-container {
   max-width: 570px;
-  margin:5rem auto;
+  margin: 5rem auto;
 }
-p.txt-sm{
+p.txt-sm {
   font-size: small;
 }
-.h-wrap{
+.h-wrap {
   height: max-content;
+}
+
+/* Put this in your global CSS file (e.g., styles.css) */
+.scrollbar-thin {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #9ca3af #e5e7eb; /* thumb color, track color */
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px; /* Chrome, Safari, Edge */
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: #e5e7eb; /* Tailwind gray-200 */
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: #9ca3af; /* Tailwind gray-400 */
+  border-radius: 9999px; /* Fully rounded */
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: #6b7280; /* Tailwind gray-500 */
 }
