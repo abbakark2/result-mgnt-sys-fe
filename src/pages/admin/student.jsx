@@ -136,6 +136,17 @@ function Student() {
     return { total, graduated, spillover, inactive };
   }, [students]);
 
+  const safeValue = (value) =>
+    value === null || value === undefined ? "" : value;
+
+  // Update the value props to use safeValue
+  const updatedStats = {
+    total: safeValue(stats.total),
+    graduated: safeValue(stats.graduated),
+    spillover: safeValue(stats.spillover),
+    inactive: safeValue(stats.inactive),
+  };
+
   // ── Filtered students ────────────────────────────────────────────────────────
   const filtered = useMemo(() => {
     const q = searchQuery.toLowerCase();
@@ -178,25 +189,25 @@ function Student() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard
           label="Total Students"
-          value={stats.total}
+          value={updatedStats.total}
           icon={FiUsers}
           color="bg-indigo-500"
         />
         <StatCard
           label="Graduated"
-          value={stats.graduated}
+          value={updatedStats.graduated}
           icon={FiUsers}
           color="bg-emerald-500"
         />
         <StatCard
           label="Spillover"
-          value={stats.spillover}
+          value={updatedStats.spillover}
           icon={FiUsers}
           color="bg-amber-500"
         />
         <StatCard
           label="Inactive"
-          value={stats.inactive}
+          value={updatedStats.inactive}
           icon={FiUsers}
           color="bg-rose-500"
         />
@@ -217,6 +228,7 @@ function Student() {
               className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg
                          outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400
                          placeholder:text-slate-400 text-slate-700 transition-all duration-200"
+              style={{ paddingLeft: "40px" }}
             />
           </div>
 
@@ -342,11 +354,15 @@ function Student() {
       {/* Modal */}
       <StudentModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSearchQuery("");
+          setStatusFilter("all");
+        }}
         initialData={selectedStudent}
+        fetchStudents={fetchStudents}
         isSubmitting={isSubmitting}
         setIsSubmitting={setIsSubmitting}
-        fetchStudents={fetchStudents}
       />
     </div>
   );

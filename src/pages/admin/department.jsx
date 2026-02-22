@@ -9,38 +9,17 @@ import { FiTrash } from "react-icons/fi";
 import Breadcrumb from "../../components/breadcrumb";
 import Search from "../../components/search";
 import Col2 from "../../components/col2";
+import { fetchDepartments } from "../../store/department-slice";
 
 function Department() {
   const dispatch = useDispatch();
-  const departments = useSelector((state) => state.department.departments);
-  const isLoading = useSelector((state) => state.department.isLoading);
-
-  // Modal & Submission State
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const fetchDepartments = async () => {
-    try {
-      dispatch(departmentActions.setIsLoading(true));
-      const res = await axiosClient.get("/admin/dept");
-      dispatch(departmentActions.setDepartments(res.data.Departments));
-    } catch (error) {
-      const statusCode = error.response ? error.response.status : "Error";
-      const errorMessage =
-        error.response?.data?.message || "Failed to fetch departments";
-      toast.error(
-        <div>
-          <strong>{statusCode}</strong>: {errorMessage}
-        </div>,
-      );
-    } finally {
-      dispatch(departmentActions.setIsLoading(false));
-    }
-  };
+  const { departments, isLoading } = useSelector((state) => state.department);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    fetchDepartments();
+    dispatch(fetchDepartments());
   }, [dispatch]);
 
   const handleSubmit = async (formData) => {

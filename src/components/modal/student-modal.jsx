@@ -18,7 +18,7 @@ const INITIAL_FORM = {
   mode_entry: "UTME",
   status: "active",
   middle_name: "",
-  date_of_birth: "",
+  dob: "",
   gender: "",
   faculty_id: "",
   department_id: "",
@@ -109,9 +109,30 @@ function StudentModal({
 
   useEffect(() => {
     if (isOpen) {
-      setFormData(
-        initialData?.id ? { ...INITIAL_FORM, ...initialData } : INITIAL_FORM,
-      );
+      if (initialData?.id) {
+        // Map API response data to form structure for edit mode
+        const formData = {
+          user_id: initialData.user?.id || "",
+          name: initialData.user?.name || "",
+          email: initialData.user?.email || "",
+          phone: initialData.user?.phone || "",
+          matric_number: initialData.matric_number || "",
+          admission_year: initialData.admission_year || "",
+          graduation_year: initialData.graduation_year || "",
+          current_level: initialData.level || "",
+          mode_entry: initialData.mode_entry || "UTME",
+          status: initialData.status || "active",
+          middle_name: initialData.middle_name || "",
+          dob: initialData.user?.dob || "",
+          gender: initialData.gender || "",
+          faculty_id: initialData.user?.faculty_id || "",
+          department_id: initialData.user?.department_id || "",
+        };
+        setFormData(formData);
+      } else {
+        // Reset to initial form for add mode
+        setFormData(INITIAL_FORM);
+      }
       setErrors({});
       setTouched({});
     }
@@ -181,7 +202,7 @@ function StudentModal({
       case "current_level":
         if (!value) error = "Current level is required.";
         break;
-      case "date_of_birth":
+      case "dob":
         if (!value) error = "Date of birth is required.";
         break;
       case "gender":
@@ -207,7 +228,7 @@ function StudentModal({
       "admission_year",
       "graduation_year",
       "current_level",
-      "date_of_birth",
+      "dob",
       "gender",
       "faculty_id",
       "department_id",
@@ -230,9 +251,11 @@ function StudentModal({
     setIsSubmitting(true);
     try {
       if (isEditMode) {
+        // For edit mode, send the complete form data
         await axiosClient.put(`/admin/students/${initialData.id}`, formData);
         toast.success("Student updated successfully");
       } else {
+        // For add mode, send the form data
         await axiosClient.post("/admin/students", formData);
         toast.success("Student added successfully");
       }
@@ -300,7 +323,7 @@ function StudentModal({
                   <input
                     type="text"
                     name="name"
-                    value={formData.name}
+                    value={formData.name || ""}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     placeholder="e.g. Aminu Bello"
@@ -309,18 +332,14 @@ function StudentModal({
                 </FormField>
               </div>
 
-              <FormField
-                label="Date of Birth"
-                required
-                error={errors.date_of_birth}
-              >
+              <FormField label="Date of Birth" required error={errors.dob}>
                 <input
                   type="date"
-                  name="date_of_birth"
-                  value={formData.date_of_birth}
+                  name="dob"
+                  value={formData.dob || ""}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  className={inputClass(errors.date_of_birth)}
+                  className={inputClass(errors.dob)}
                 />
               </FormField>
 
@@ -329,15 +348,28 @@ function StudentModal({
                 <SelectWrapper>
                   <select
                     name="gender"
-                    value={formData.gender}
+                    value={formData.gender || ""}
                     onChange={handleChange}
+                    selected={formData.gender === "male"}
                     onBlur={handleBlur}
                     className={selectClass(errors.gender)}
                   >
                     <option value="">Select gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
+                    <option value="male" selected={formData.gender === "male"}>
+                      Male
+                    </option>
+                    <option
+                      value="female"
+                      selected={formData.gender === "female"}
+                    >
+                      Female
+                    </option>
+                    <option
+                      value="other"
+                      selected={formData.gender === "other"}
+                    >
+                      Other
+                    </option>
                   </select>
                 </SelectWrapper>
               </FormField>
@@ -347,7 +379,7 @@ function StudentModal({
                 <input
                   type="email"
                   name="email"
-                  value={formData.email}
+                  value={formData.email || ""}
                   onChange={handleChange}
                   onBlur={handleBlur}
                   placeholder="student@university.edu"
@@ -388,7 +420,7 @@ function StudentModal({
                   <input
                     type="text"
                     name="matric_number"
-                    value={formData.matric_number}
+                    value={formData.matric_number || ""}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     placeholder="e.g. UNI/2021/001"
@@ -403,6 +435,7 @@ function StudentModal({
                   <select
                     name="faculty_id"
                     value={formData.faculty_id}
+                    selected={initialData.user.faculty_id}
                     onChange={handleFacultyChange}
                     onBlur={handleBlur}
                     disabled={isFacultiesLoading}

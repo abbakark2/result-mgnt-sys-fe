@@ -9,6 +9,8 @@ import Faculty from "./pages/admin/faculty";
 import AddFaculty from "./pages/admin/add-faculty";
 import Department from "./pages/admin/department";
 import Student from "./pages/admin/student";
+import Courses from "./pages/admin/courses";
+import CourseModal from "./components/modal/course-modal";
 
 function AppRoutes() {
   return (
@@ -27,6 +29,9 @@ function AppRoutes() {
             <Route path="/admin/department" element={<Department />} />
             {/* STUDENTS ROUTES */}
             <Route path="/admin/students" element={<Student />} />
+            {/* Couses ROUTES */}
+            <Route path="/admin/courses" element={<Courses />} />
+            <Route path="/admin/courses/add" element={<CourseModal />} />
           </Route>
         </Route>
 

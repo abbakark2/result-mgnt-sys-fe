@@ -9,8 +9,8 @@ import {
   FiLayers,
   FiUpload,
   FiSettings,
-  FiChevronDown, // Added for dropdown indication
-  FiBriefcase, // Added for Academic section group icon
+  FiChevronDown,
+  FiBriefcase,
 } from "react-icons/fi";
 
 function Sidebar() {
@@ -21,9 +21,7 @@ function Sidebar() {
   const navItemClass = ({ isActive }) =>
     `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
      ${
-       isActive
-         ? "bg-white/20 shadow-lg border border-white/20 text-white"
-         : "text-indigo-100 hover:bg-white/10 hover:text-white"
+       isActive ? "bg-white/20 backdrop-blur-md shadow-lg" : "hover:bg-white/10"
      }`;
 
   return (
@@ -31,50 +29,50 @@ function Sidebar() {
       {/* Mobile toggle */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="md:hidden fixed top-4 left-4 z-50 bg-white/90 backdrop-blur-md rounded-lg px-3 py-2 shadow-xl border border-white/20"
+        className="md:hidden fixed top-4 left-4 z-50 bg-white/90 backdrop-blur-md rounded-lg px-3 py-2 shadow-xl border border-peach-200/40"
       >
-        <span className="text-indigo-900 font-bold">☰</span>
+        <span className="text-peach-800 font-bold">☰</span>
       </button>
 
-      {/* Sidebar with Glassmorphism */}
+      {/* Sidebar */}
       <aside
         className={`
           fixed top-0 left-0 z-40
-          h-screen w-[300px] overflow-y-auto
-          bg-indigo-950/80 backdrop-blur-xl
-          border-r border-white/10
+          h-screen w-75 overflow-y-auto
+          bg-linear-to-b from-orange-300 via-rose-200 to-red-400 shadow-2xl backdrop-blur-xl
+          border-r border-orange-700/40
           transform transition-transform duration-300
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
           md:translate-x-0
         `}
       >
         {/* Brand */}
-        <div className="flex gap-4 px-6 py-8 border-b border-white/10">
-          <div className="bg-indigo-500/30 w-12 h-12 rounded-2xl flex items-center justify-center mb-3 border border-white/20 shadow-inner">
+        <div className="flex gap-4 px-6 py-8 border-b border-peach-700/40">
+          <div className="bg-peach-500/30 w-12 h-12 rounded-2xl flex items-center justify-center mb-3 border border-peach-300/40 shadow-inner">
             <span className="text-white font-black text-xl">U</span>
           </div>
           <div>
             <h1 className="text-xl font-bold text-white tracking-tight">
               USRPS
             </h1>
-            <p className="text-xs text-indigo-300/80 uppercase tracking-widest">
+            <p className="text-xs text-peach-200/80 uppercase tracking-widest">
               Academic Portal
             </p>
           </div>
         </div>
 
-        {/* User Card - Glass Effect */}
-        <div className="mx-4 my-6 p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3 shadow-2xl">
+        {/* User Card */}
+        <div className="mx-4 my-6 p-4 rounded-2xl bg-white/5 border border-peach-700/30 flex items-center gap-3 shadow-2xl">
           <img
             src={Avatar}
             alt="Avatar"
-            className="w-12 h-12 rounded-full border-2 border-indigo-400/50 shadow-md"
+            className="w-12 h-12 rounded-full border-2 border-peach-400/50 shadow-md"
           />
           <div className="overflow-hidden">
             <p className="text-sm font-semibold text-white truncate">
               {userData?.name || "Admin User"}
             </p>
-            <p className="text-[10px] text-indigo-300 font-medium">
+            <p className="text-[10px] text-peach-200 font-medium">
               SYSTEM ADMINISTRATOR
             </p>
           </div>
@@ -91,7 +89,11 @@ function Sidebar() {
           <div>
             <button
               className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl transition-all duration-300 
-                ${academicStructureOpen ? "bg-white/10 text-white" : "text-indigo-100 hover:bg-white/5"}`}
+                ${
+                  academicStructureOpen
+                    ? "bg-peach-700/60 text-white"
+                    : "text-peach-200 hover:bg-peach-500/20"
+                }`}
               onClick={() => setAcademicStructureOpen(!academicStructureOpen)}
             >
               <div className="flex items-center gap-3 font-medium">
@@ -99,11 +101,13 @@ function Sidebar() {
                 Academic Structure
               </div>
               <FiChevronDown
-                className={`transition-transform duration-300 ${academicStructureOpen ? "rotate-180" : ""}`}
+                className={`transition-transform duration-300 ${
+                  academicStructureOpen ? "rotate-180" : ""
+                }`}
               />
             </button>
 
-            {/* Smooth Transition Container */}
+            {/* Accordion Content */}
             <div
               className={`overflow-hidden transition-all duration-500 ease-in-out ${
                 academicStructureOpen
@@ -111,7 +115,7 @@ function Sidebar() {
                   : "max-h-0 opacity-0"
               }`}
             >
-              <div className="pl-6  border-l-2 border-white/10 ml-6">
+              <div className="pl-6 border-l-2 border-peach-600/40 ml-6">
                 <NavLink to="/admin/faculty" className={navItemClass}>
                   <FiLayers />
                   <span className="text-sm">Faculties</span>
@@ -121,6 +125,7 @@ function Sidebar() {
                   <FiUsers />
                   <span className="text-sm">Departments</span>
                 </NavLink>
+
                 <NavLink to="/admin/students" className={navItemClass}>
                   <FiUsers className="text-lg" />
                   <span className="font-medium">Students</span>
@@ -139,7 +144,7 @@ function Sidebar() {
             <span className="font-medium">Excel Uploads</span>
           </NavLink>
 
-          <div className="pt-4 mt-4 border-t border-white/10">
+          <div className="pt-4 mt-4 border-t border-peach-700/40">
             <NavLink to="/admin/settings" className={navItemClass}>
               <FiSettings className="text-lg" />
               <span className="font-medium">Settings</span>

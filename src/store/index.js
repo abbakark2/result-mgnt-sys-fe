@@ -4,6 +4,7 @@ import userSlice from "./user-slice";
 import facultySlice from "./faculty-slice";
 import departmentSlice from "./department-slice";
 import studentSlice from "./student-slice";
+import courseSlice from "./course-slice";
 import { apiSlice } from "./apiSlice";
 
 const store = configureStore({
@@ -13,6 +14,7 @@ const store = configureStore({
     faculty: facultySlice.reducer,
     department: departmentSlice.reducer,
     student: studentSlice.reducer,
+    course: courseSlice.reducer,
     [apiSlice.reducerPath]: apiSlice.reducer,
   },
   middleware: (getDefaultMiddleware) =>
