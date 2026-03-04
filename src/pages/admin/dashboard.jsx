@@ -7,7 +7,7 @@ import ActivityCard from "../../components/recent-activity";
 function Dashboard() {
   return (
     <div>
-      <section className="p-4 rounded-lg bg-indigo-500 text-white">
+      <section className="p-4 rounded-lg bg-linear-to-r bg-gray-50 via-gray-500 to-gray-400 text-gray-800">
         <h1 className="text-2xl mb-2">Good Morning Abubakar</h1>
         <p className="text-sm mt-2">
           Here is an Overview of the Academic System
@@ -19,7 +19,7 @@ function Dashboard() {
           <StatCard /> <StatCard /> <StatCard />
           <StatCard /> <StatCard /> <StatCard />
         </div>
-        <div className="p-4 min-w-[350px] w-full md:w-1/3 flex flex-col gap-4">
+        <div className="p-4 min-w-87.5 w-full md:w-1/3 flex flex-col gap-4">
           <div className="p-4 bg-white rounded-lg shadow-lg">
             <h1>
               <b>Quick Insights</b>

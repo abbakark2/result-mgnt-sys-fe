@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axiosClient from "../axios-client";
 
 export const fetchDepartments = createAsyncThunk(
-  "department/fetch", // The "Label" we discussed
+  "department/fetch",
   async (_, { rejectWithValue }) => {
     try {
       const res = await axiosClient.get("/admin/dept");
@@ -15,8 +15,11 @@ export const fetchDepartments = createAsyncThunk(
   },
   {
     // This runs BEFORE the thunk starts
-    condition: (_, { getState }) => {
+    condition: (force, { getState }) => {
       const { department } = getState();
+
+      // If force is true, don't skip!
+      if (force) return true;
       // If we already have data or are currently loading, skip the call
       if (department.departments.length > 0 || department.isLoading) {
         return false;

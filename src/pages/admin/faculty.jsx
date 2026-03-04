@@ -1,47 +1,165 @@
-import React, { useEffect, useState } from "react";
-import axiosClient from "../../axios-client";
-import { facultyActions } from "../../store/faculty-slice";
+import React, { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router";
 import { toast } from "react-toastify";
+import {
+  FiTrash,
+  FiEdit2,
+  FiPlus,
+  FiDownload,
+  FiSearch,
+  FiUsers,
+  FiBook,
+  FiLayers,
+  FiGrid,
+} from "react-icons/fi";
+import axiosClient from "../../axios-client";
+import { facultyActions } from "../../store/faculty-slice";
 import FacultyModal from "../../components/modal/faculty-modal";
-import { FiTrash } from "react-icons/fi";
-import Breadcrumb from "../../components/breadcrumb";
-import Search from "../../components/search";
-import Col2 from "../../components/col2";
+import { StatCard2 } from "../../components/stat-card2";
 
+/* ─── Inline styles for animations (no Tailwind plugin needed) ─── */
+import { facultyCSS } from "./faculty-css";
+const css = facultyCSS;
+const StatCard = StatCard2;
+
+/* ─── Stat Card ─── */
+const STATS_CONFIG = [
+  {
+    key: "faculties",
+    label: "Faculties",
+    icon: FiGrid,
+    classes:
+      "bg-linear-to-r from-gray-800 via-gray-500 to-gray-400 shadow-lg transition-all duration-300",
+    delay: "stagger-1",
+  },
+  {
+    key: "departments",
+    label: "Departments",
+    icon: FiLayers,
+    classes:
+      "bg-linear-to-b from-gray-800 via-gray-600 to-gray-400 shadow-lg transition-all duration-300",
+
+    delay: "stagger-2",
+  },
+  {
+    key: "students",
+    label: "Students",
+    icon: FiUsers,
+    classes:
+      "bg-linear-to-l from-gray-800 via-gray-600 to-gray-400 shadow-lg transition-all duration-300",
+    delay: "stagger-3",
+  },
+  {
+    key: "courses",
+    label: "Courses",
+    icon: FiBook,
+    classes:
+      "bg-linear-to-t from-gray-700 via-gray-600 to-gray-300 shadow-lg transition-all duration-300",
+    delay: "stagger-4",
+  },
+];
+
+/* ─── Avatar chip ─── */
+function FacultyAvatar({ name }) {
+  const initials =
+    name
+      ?.split(" ")
+      .map((w) => w[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "?";
+  const hue = ((name?.charCodeAt(0) || 0) * 37) % 360;
+  return (
+    <div
+      style={{
+        width: 38,
+        height: 38,
+        borderRadius: 12,
+        background: `hsl(${hue},55%,88%)`,
+        color: `hsl(${hue},55%,32%)`,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontWeight: 700,
+        fontSize: 13,
+        flexShrink: 0,
+        letterSpacing: "0.02em",
+      }}
+    >
+      {initials}
+    </div>
+  );
+}
+
+/* ─── Skeleton Row ─── */
+function SkeletonRows() {
+  return Array.from({ length: 5 }).map((_, i) => (
+    <tr key={i}>
+      <td style={{ padding: "14px 20px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div
+            className="skeleton"
+            style={{ width: 38, height: 38, borderRadius: 12 }}
+          />
+          <div>
+            <div
+              className="skeleton"
+              style={{ width: 160, height: 14, marginBottom: 6 }}
+            />
+            <div className="skeleton" style={{ width: 60, height: 10 }} />
+          </div>
+        </div>
+      </td>
+      <td style={{ padding: "14px 20px" }}>
+        <div className="skeleton" style={{ width: 80, height: 14 }} />
+      </td>
+      <td style={{ padding: "14px 20px" }}>
+        <div
+          className="skeleton"
+          style={{ width: 60, height: 24, borderRadius: 999 }}
+        />
+      </td>
+      <td style={{ padding: "14px 20px" }}>
+        <div
+          className="skeleton"
+          style={{
+            width: 70,
+            height: 32,
+            borderRadius: 10,
+            marginLeft: "auto",
+          }}
+        />
+      </td>
+    </tr>
+  ));
+}
+
+/* ─── Main Component ─── */
 function Faculty() {
   const dispatch = useDispatch();
-  const faculties = useSelector((state) => state.faculty.faculties);
-  const isLoading = useSelector((state) => state.faculty.isLoading);
+  const { faculties = [], isLoading } = useSelector((s) => s.faculty);
 
-  // Modal & Submission State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFaculty, setSelectedFaculty] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [search, setSearch] = useState("");
 
-  const fetchFaculties = async () => {
+  const fetchFaculties = useCallback(async () => {
     try {
       dispatch(facultyActions.setIsLoading(true));
       const res = await axiosClient.get("/admin/faculties/data");
       dispatch(facultyActions.setFaculties(res.data.Faculties));
-    } catch (error) {
-      const statusCode = error.response ? error.response.status : "Error";
-      const errorMessage =
-        error.response?.data?.message || "Failed to fetch faculties";
-      toast.error(
-        <div>
-          <strong>{statusCode}</strong>: {errorMessage}
-        </div>,
-      );
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to fetch faculties");
     } finally {
       dispatch(facultyActions.setIsLoading(false));
     }
-  };
+  }, [dispatch]);
 
   useEffect(() => {
     fetchFaculties();
-  }, [dispatch]);
+  }, [fetchFaculties]);
 
   const handleSubmit = async (formData) => {
     setIsSubmitting(true);
@@ -50,23 +168,11 @@ function Faculty() {
         `/admin/faculty/${selectedFaculty.id}`,
         formData,
       );
-
-      const successMsg = res.data.message || "Faculty updated successfully";
-      toast.success(`${res.status} | ${successMsg}`);
-
+      toast.success(res.data.message || "Faculty updated successfully");
       setIsModalOpen(false);
-      fetchFaculties(); // Refresh the list
-    } catch (error) {
-      const statusCode = error.response
-        ? error.response.status
-        : "Network Error";
-      const errorMessage =
-        error.response?.data?.message || "An error occurred during update";
-      toast.error(
-        <div>
-          <strong>{statusCode}</strong>: {errorMessage}
-        </div>,
-      );
+      fetchFaculties();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Update failed");
     } finally {
       setIsSubmitting(false);
     }
@@ -78,176 +184,696 @@ function Faculty() {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this faculty?")) {
-      try {
-        await axiosClient.delete(`/admin/faculty/${id}`);
-        toast.success("Faculty deleted successfully");
-        fetchFaculties(); // Refresh the list
-      } catch (error) {
-        toast.error("Failed to delete faculty");
-      }
+    if (!window.confirm("Delete this faculty? This action cannot be undone."))
+      return;
+    try {
+      await axiosClient.delete(`/admin/faculty/${id}`);
+      toast.success("Faculty deleted");
+      fetchFaculties();
+    } catch {
+      toast.error("Delete failed");
     }
   };
 
-  const statsData = [
-    {
-      id: 1,
-      total: faculties.length,
-      label: "Faculties",
-      class: "bg-gradient-to-r from-indigo-500 to-purple-500 text-white",
-    },
-    {
-      id: 2,
-      total: 26,
-      label: "Departments",
-      class: "bg-gradient-to-r from-green-500 to-teal-500 text-white",
-    },
-    {
-      id: 3,
-      total: "4,832",
-      label: "Students",
-      class: "bg-gradient-to-r from-yellow-500 to-orange-500 text-white",
-    },
-    {
-      id: 4,
-      total: 314,
-      label: "Total Courses",
-      class: "bg-gradient-to-r from-red-500 to-pink-500 text-white",
-    },
-  ];
+  const filtered = faculties.filter(
+    (f) =>
+      f.name?.toLowerCase().includes(search.toLowerCase()) ||
+      f.abbreviation?.toLowerCase().includes(search.toLowerCase()),
+  );
 
-  let sn = 0;
+  const statsValues = {
+    faculties: faculties.length,
+    departments: 26,
+    students: "4.8k",
+    courses: 314,
+  };
 
   return (
-    <div className="p-4 overflow-hidden">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-800">Faculties</h1>
-          <div className="text-slate-500 mt-1">
-            <Breadcrumb currentPage="Faculties" />
-          </div>
-        </div>
-
-        <div className="flex gap-3">
-          <button className="px-4 py-2 rounded-lg border border-stone-300 bg-white hover:bg-stone-50 transition">
-            Import
-          </button>
-          <Link
-            to="/admin/faculty/add"
-            className="px-5 py-2 rounded-lg bg-linear-to-r from-orange-500 to-red-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
+    <>
+      <style>{css}</style>
+      <div
+        className="faculty-root"
+        style={{
+          minHeight: "100vh",
+          background: "var(--surface)",
+          padding: "28px 16px",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 1200,
+            margin: "0 auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: 28,
+          }}
+        >
+          {/* ── Header ── */}
+          <header
+            className="animate-fade-up"
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "space-between",
+              alignItems: "flex-end",
+              gap: 16,
+            }}
           >
-            ➕ Add Faculty
-          </Link>
-        </div>
-      </div>
+            <div>
+              <h1
+                style={{
+                  fontSize: "clamp(28px,5vw,40px)",
+                  fontWeight: 400,
+                  color: "var(--ink)",
+                  lineHeight: 1.1,
+                  margin: 0,
+                }}
+              >
+                Faculties
+              </h1>
+            </div>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <button
+                className="btn-ghost"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "10px 18px",
+                  borderRadius: 12,
+                  border: "1.5px solid var(--border)",
+                  background: "var(--card)",
+                  color: "var(--ink-muted)",
+                  fontWeight: 600,
+                  fontSize: 14,
+                  cursor: "pointer",
+                  boxShadow: "var(--shadow-sm)",
+                }}
+                aria-label="Import faculties"
+              >
+                <FiDownload size={16} /> Import
+              </button>
+              <Link
+                to="/admin/faculty/add"
+                className="btn-primary"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "10px 22px",
+                  borderRadius: 12,
+                  background: "linear-gradient(135deg,#f59e0b,#d97706)",
+                  color: "#fff",
+                  fontWeight: 700,
+                  fontSize: 14,
+                  textDecoration: "none",
+                  boxShadow: "0 4px 14px rgba(245,158,11,0.3)",
+                }}
+                aria-label="Add new faculty"
+              >
+                <FiPlus size={18} /> Add Faculty
+              </Link>
+            </div>
+          </header>
 
-      {/* MAIN CONTENTS */}
-      <div className="mt-4 p-4 bg-white rounded-2xl">
-        {/* Search Row */}
-        <div className="flex justify-between">
-          <Search placeholder="Search faculties" />
-          <div className="flex gap-2 items-center">
-            <select name="" id="" className="p-2 bg-gray-100">
-              <option value="">All Faculties</option>
-            </select>
-            <div className="flex items-center p-2 bg-gray-100">
-              Sort by:
-              <select name="" id="">
-                <option value="">Newest</option>
-              </select>
+          {/* ── Stats Grid ── */}
+          <section
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))",
+              gap: 14,
+            }}
+            aria-label="Summary statistics"
+          >
+            {STATS_CONFIG.map(({ key, label, icon, classes, delay }) => (
+              <StatCard
+                key={key}
+                label={label}
+                value={statsValues[key]}
+                icon={icon}
+                classes={classes}
+                delay={delay}
+              />
+            ))}
+          </section>
+
+          {/* ── Table Card ── */}
+          <div
+            className="animate-fade-up stagger-5"
+            style={{
+              background: "var(--card)",
+              borderRadius: 24,
+              boxShadow: "var(--shadow-md)",
+              border: "1px solid var(--border)",
+              overflow: "hidden",
+            }}
+          >
+            {/* Toolbar */}
+            <div
+              className="bg-white/30 backdrop-blur-md"
+              style={{
+                padding: "18px 24px",
+                borderBottom: "1px solid var(--border)",
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 12,
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              {/* Search */}
+              <label
+                style={{
+                  position: "relative",
+                  flex: "1 1 220px",
+                  maxWidth: 340,
+                }}
+                aria-label="Search faculties"
+              >
+                <FiSearch
+                  size={15}
+                  style={{
+                    position: "absolute",
+                    left: 13,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: "var(--ink-muted)",
+                    pointerEvents: "none",
+                  }}
+                />
+                <input
+                  className="search-input"
+                  type="search"
+                  placeholder="Search faculties…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  style={{
+                    width: "100%",
+                    paddingLeft: 38,
+                    paddingRight: 16,
+                    paddingTop: 10,
+                    paddingBottom: 10,
+                    borderRadius: 12,
+                    border: "1.5px solid var(--border)",
+                    background: "var(--surface)",
+                    fontSize: 14,
+                    color: "var(--ink)",
+                    outline: "none",
+                    transition: "box-shadow 0.2s",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </label>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                {[
+                  { placeholder: "All Faculties", opts: ["All Faculties"] },
+                  {
+                    placeholder: "Newest first",
+                    opts: ["Newest first", "Oldest first", "A–Z"],
+                  },
+                ].map((sel, i) => (
+                  <select
+                    key={i}
+                    style={{
+                      padding: "9px 14px",
+                      borderRadius: 11,
+                      border: "1.5px solid var(--border)",
+                      background: "var(--card)",
+                      fontSize: 13,
+                      color: "var(--ink-muted)",
+                      cursor: "pointer",
+                      outline: "none",
+                      fontFamily: "'DM Sans',sans-serif",
+                    }}
+                  >
+                    {sel.opts.map((o) => (
+                      <option key={o}>{o}</option>
+                    ))}
+                  </select>
+                ))}
+              </div>
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: "8px 0" }} className="bg-gray-100">
+              {/* ── Loading ── */}
+              {isLoading && (
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <tbody>
+                      <SkeletonRows />
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* ── Empty ── */}
+              {!isLoading && filtered.length === 0 && (
+                <div style={{ textAlign: "center", padding: "64px 24px" }}>
+                  <div
+                    style={{
+                      width: 64,
+                      height: 64,
+                      borderRadius: 20,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      margin: "0 auto 16px",
+                    }}
+                  >
+                    <FiGrid size={26} color="#94a3b8" />
+                  </div>
+                  <p
+                    style={{
+                      fontWeight: 700,
+                      color: "var(--ink)",
+                      marginBottom: 4,
+                    }}
+                  >
+                    {search ? "No results found" : "No faculties yet"}
+                  </p>
+                  <p style={{ fontSize: 13, color: "var(--ink-muted)" }}>
+                    {search
+                      ? `Try a different search term.`
+                      : `Click "Add Faculty" to get started.`}
+                  </p>
+                </div>
+              )}
+
+              {/* ── Mobile Cards ── */}
+              {!isLoading && filtered.length > 0 && (
+                <>
+                  <div
+                    style={{ display: "grid", gap: 12, padding: "16px" }}
+                    className="mobile-list"
+                  >
+                    <style>{`@media(min-width:768px){.mobile-list{display:none!important}}`}</style>
+                    {filtered.map((faculty, i) => (
+                      <article
+                        key={faculty.id}
+                        className={`mobile-card animate-scale-in`}
+                        style={{
+                          animationDelay: `${i * 0.04}s`,
+                          borderRadius: 18,
+                          border: "1.5px solid var(--border)",
+                          background: "var(--surface)",
+                          padding: "18px",
+                          boxShadow: "var(--shadow-sm)",
+                        }}
+                        aria-label={`Faculty: ${faculty.name}`}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "flex-start",
+                            marginBottom: 14,
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 12,
+                            }}
+                          >
+                            <FacultyAvatar name={faculty.name} />
+                            <div>
+                              <p
+                                style={{
+                                  fontWeight: 700,
+                                  color: "var(--ink)",
+                                  margin: 0,
+                                  fontSize: 15,
+                                }}
+                              >
+                                {faculty.name}
+                              </p>
+                              <span
+                                className="tag"
+                                style={{ color: "var(--ink-muted)" }}
+                              >
+                                {faculty.abbreviation}
+                              </span>
+                            </div>
+                          </div>
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 5,
+                              padding: "4px 10px",
+                              borderRadius: 999,
+                              background: "var(--teal-light)",
+                              color: "var(--teal)",
+                              fontSize: 11,
+                              fontWeight: 700,
+                            }}
+                          >
+                            <span
+                              className="pulse-dot"
+                              style={{
+                                width: 6,
+                                height: 6,
+                                borderRadius: "50%",
+                                background: "currentColor",
+                                display: "inline-block",
+                              }}
+                            />
+                            Active
+                          </span>
+                        </div>
+
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(3,1fr)",
+                            gap: 8,
+                            background: "var(--card)",
+                            borderRadius: 12,
+                            padding: "12px",
+                            marginBottom: 14,
+                            textAlign: "center",
+                          }}
+                        >
+                          {[
+                            {
+                              v: faculty?.departments?.length || 0,
+                              l: "Depts",
+                            },
+                            { v: "65k", l: "Students" },
+                            { v: "345", l: "Courses" },
+                          ].map(({ v, l }) => (
+                            <div key={l}>
+                              <p
+                                style={{
+                                  margin: 0,
+                                  fontWeight: 800,
+                                  fontSize: 18,
+                                  color: "var(--ink)",
+                                }}
+                              >
+                                {v}
+                              </p>
+                              <p
+                                style={{
+                                  margin: 0,
+                                  fontSize: 10,
+                                  fontWeight: 700,
+                                  color: "var(--ink-muted)",
+                                  textTransform: "uppercase",
+                                  letterSpacing: "0.07em",
+                                }}
+                              >
+                                {l}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button
+                            onClick={() => handleEdit(faculty)}
+                            aria-label={`Edit ${faculty.name}`}
+                            style={{
+                              flex: 1,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: 6,
+                              padding: "10px",
+                              borderRadius: 12,
+                              border: "none",
+                              background:
+                                "linear-gradient(135deg,#0d9488,#0f766e)",
+                              color: "#fff",
+                              fontWeight: 700,
+                              fontSize: 13,
+                              cursor: "pointer",
+                              boxShadow: "0 4px 12px rgba(13,148,136,0.25)",
+                              fontFamily: "'DM Sans',sans-serif",
+                            }}
+                          >
+                            <FiEdit2 size={15} /> Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(faculty.id)}
+                            aria-label={`Delete ${faculty.name}`}
+                            style={{
+                              padding: "10px 14px",
+                              borderRadius: 12,
+                              border: "1.5px solid #fee2e2",
+                              background: "#fff",
+                              color: "#ef4444",
+                              cursor: "pointer",
+                              transition: "background 0.15s",
+                            }}
+                          >
+                            <FiTrash size={16} />
+                          </button>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+
+                  {/* ── Desktop Table ── */}
+                  <div className="desktop-table" style={{ overflowX: "auto" }}>
+                    <style>{`@media(max-width:767px){.desktop-table{display:none!important}}`}</style>
+                    <table
+                      style={{ width: "100%", borderCollapse: "collapse" }}
+                      role="table"
+                      aria-label="Faculties table"
+                    >
+                      <thead>
+                        <tr style={{ borderBottom: "1px solid var(--border)" }}>
+                          {["Faculty", "Departments", "Status", "Actions"].map(
+                            (h, i) => (
+                              <th
+                                key={h}
+                                style={{
+                                  padding: "12px 24px",
+                                  fontSize: 11,
+                                  fontWeight: 800,
+                                  letterSpacing: "0.1em",
+                                  textTransform: "uppercase",
+                                  color: "var(--ink-muted)",
+                                  textAlign: i === 3 ? "right" : "left",
+                                }}
+                              >
+                                {h}
+                              </th>
+                            ),
+                          )}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filtered.map((faculty, i) => (
+                          <tr
+                            key={faculty.id}
+                            className={`row-item animate-fade-up ${i % 2 == 0 ? "bg-gray-50" : ""}`}
+                          >
+                            <td style={{ padding: "16px 24px" }}>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 12,
+                                }}
+                              >
+                                <FacultyAvatar name={faculty.name} />
+                                <div>
+                                  <p
+                                    style={{
+                                      margin: 0,
+                                      fontWeight: 700,
+                                      color: "var(--ink)",
+                                      fontSize: 14,
+                                    }}
+                                  >
+                                    {faculty.name}
+                                  </p>
+                                  <span
+                                    className="tag"
+                                    style={{ color: "var(--ink-muted)" }}
+                                  >
+                                    {faculty.abbreviation}
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
+                            <td style={{ padding: "16px 24px" }}>
+                              <span
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 6,
+                                  padding: "5px 12px",
+                                  borderRadius: 8,
+                                  background: "var(--teal-light)",
+                                  color: "var(--teal)",
+                                  fontSize: 13,
+                                  fontWeight: 700,
+                                }}
+                              >
+                                {faculty?.departments?.length || 0} depts
+                              </span>
+                            </td>
+                            <td style={{ padding: "16px 24px" }}>
+                              <span
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 5,
+                                  padding: "5px 12px",
+                                  borderRadius: 999,
+                                  background: "var(--teal-light)",
+                                  color: "var(--teal)",
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  letterSpacing: "0.05em",
+                                }}
+                              >
+                                <span
+                                  className="pulse-dot"
+                                  style={{
+                                    width: 6,
+                                    height: 6,
+                                    borderRadius: "50%",
+                                    background: "currentColor",
+                                    display: "inline-block",
+                                  }}
+                                />
+                                Active
+                              </span>
+                            </td>
+                            <td
+                              style={{
+                                padding: "16px 24px",
+                                textAlign: "right",
+                              }}
+                            >
+                              <div
+                                className="row-actions"
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "flex-end",
+                                  gap: 4,
+                                }}
+                              >
+                                <button
+                                  onClick={() => handleEdit(faculty)}
+                                  aria-label={`Edit ${faculty.name}`}
+                                  title="Edit faculty"
+                                  style={{
+                                    padding: "8px 14px",
+                                    borderRadius: 10,
+                                    border: "1.5px solid var(--border)",
+                                    background: "var(--card)",
+                                    color: "var(--teal)",
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 6,
+                                    fontSize: 13,
+                                    fontWeight: 600,
+                                    transition:
+                                      "background 0.15s, border-color 0.15s",
+                                    fontFamily: "'DM Sans',sans-serif",
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.background =
+                                      "var(--teal-light)";
+                                    e.currentTarget.style.borderColor =
+                                      "var(--teal)";
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.background =
+                                      "var(--card)";
+                                    e.currentTarget.style.borderColor =
+                                      "var(--border)";
+                                  }}
+                                >
+                                  <FiEdit2 size={14} /> Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(faculty.id)}
+                                  aria-label={`Delete ${faculty.name}`}
+                                  title="Delete faculty"
+                                  style={{
+                                    padding: "8px 10px",
+                                    borderRadius: 10,
+                                    border: "1.5px solid var(--border)",
+                                    background: "var(--card)",
+                                    color: "#ef4444",
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    transition:
+                                      "background 0.15s, border-color 0.15s",
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.background =
+                                      "#fff1f2";
+                                    e.currentTarget.style.borderColor =
+                                      "#fca5a5";
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.background =
+                                      "var(--card)";
+                                    e.currentTarget.style.borderColor =
+                                      "var(--border)";
+                                  }}
+                                >
+                                  <FiTrash size={15} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Footer count */}
+                  <div
+                    style={{
+                      padding: "14px 24px",
+                      borderTop: "1px solid var(--border)",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      fontSize: 12,
+                      color: "var(--ink-muted)",
+                      fontWeight: 500,
+                    }}
+                  >
+                    <span>
+                      Showing{" "}
+                      <strong style={{ color: "var(--ink)" }}>
+                        {filtered.length}
+                      </strong>{" "}
+                      of{" "}
+                      <strong style={{ color: "var(--ink)" }}>
+                        {faculties.length}
+                      </strong>{" "}
+                      faculties
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
-        {/* Stats Row */}
-        <div className="grid grid-cols-4 my-4 gap-4">
-          {statsData.map((data) => (
-            <Col2
-              key={data.id}
-              label={data.label}
-              total={data.total}
-              className={data.class || ""}
-            />
-          ))}
-        </div>
-        <div className="my-4">
-          {isLoading ? (
-            <div className="flex items-center justify-center space-x-2 py-10">
-              <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent border-solid rounded-full animate-spin"></div>
-              <span className="text-indigo-500 font-medium">
-                Loading faculties...
-              </span>
-            </div>
-          ) : faculties.length === 0 ? (
-            <div className="text-center py-10 text-gray-500 text-lg">
-              No faculties found
-            </div>
-          ) : (
-            <div className="overflow-hidden">
-              <table className="border-separate border-spacing-y-2 min-w-200 text-left text-gray-600">
-                <thead className="bg-stone-50 text-slate-600 text-sm uppercase tracking-wide">
-                  <tr className="hover:bg-orange-50 transition-colors duration-200 text-center">
-                    <th className="p-4">Faculty Name</th>
-                    <th className="p-4">Code</th>
-                    <th className="p-4">#Departments</th>
-                    <th className="p-4">#Students</th>
-                    <th className="p-4">#Courses</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4">Created Date</th>
-                    <th className="p-4">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {faculties.map((faculty) => (
-                    <tr
-                      key={faculty.id}
-                      className={`${sn % 2 == 0 ? "bg-gray-100 hover:bg-gray-50" : "bg-gray-50 hover:bg-gray-100"} border border-gray-200 rounded-lg hover:shadow-sm transition-shadow`}
-                    >
-                      {/* Faculty name and abbreviation */}
-                      <td className="p-4 font-medium text-gray-800">
-                        {faculty.name}
-                      </td>
-                      <td className="p-4 text-gray-500 uppercase tracking-wide">
-                        {faculty.abbreviation}
-                      </td>
-                      <td className="p-4 text-center">
-                        {faculty?.departments?.length || 0}
-                      </td>
-                      <td>65546</td>
-                      <td>345</td>
-                      <td>Active</td>
-                      <td>2026-02-13</td>
-                      <td className="flex gap-2">
-                        <button
-                          onClick={() => handleEdit(faculty)}
-                          className="px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg text-white transition-colors shadow-sm"
-                        >
-                          Edit
-                        </button>
-                        {/* Delete Button */}
-                        <button
-                          onClick={() => handleDelete(faculty.id)}
-                          className="text-xs text-red-500 flex items-center gap-1 mt-1 transition-colors w-fit border hover:text-white hover:bg-red-500 border-red-500 hover:border-red-700 px-2 py-1 rounded cursor-pointer"
-                        >
-                          <FiTrash className="text-current" />
-                          <span>Delete Faculty</span>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          <FacultyModal
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            handleSubmit={handleSubmit}
-            initialData={selectedFaculty}
-            isSubmitting={isSubmitting}
-          />
-        </div>
       </div>
-    </div>
+
+      <FacultyModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        handleSubmit={handleSubmit}
+        initialData={selectedFaculty}
+        isSubmitting={isSubmitting}
+      />
+    </>
   );
 }
 

@@ -10,6 +10,7 @@ import Breadcrumb from "../../components/breadcrumb";
 import Search from "../../components/search";
 import Col2 from "../../components/col2";
 import { fetchDepartments } from "../../store/department-slice";
+import { FiPenTool } from "react-icons/fi";
 
 function Department() {
   const dispatch = useDispatch();
@@ -39,7 +40,7 @@ function Department() {
       toast.success(`${res.status} | ${successMsg}`);
 
       setIsModalOpen(false);
-      fetchDepartments();
+      dispatch(fetchDepartments(true)); // Force refetch after add/edit
     } catch (error) {
       const statusCode = error.response
         ? error.response.status
@@ -66,7 +67,8 @@ function Department() {
       try {
         await axiosClient.delete(`/admin/dept/${id}`);
         toast.success("Department deleted successfully");
-        fetchDepartments();
+        dispatch(fetchDepartments(true));
+        setSelectedDepartment(null);
       } catch (error) {
         toast.error("Failed to delete department");
       }
@@ -78,34 +80,34 @@ function Department() {
       id: 1,
       total: departments.length || 0,
       label: "Departments",
-      class: "bg-gradient-to-r from-indigo-500 to-purple-500 text-white",
+      class: "bg-linear-to-r from-gray-500 to-gray-200 text-white",
     },
     {
       id: 2,
       total: 10, // Dummy data
       label: "Faculties",
-      class: "bg-gradient-to-r from-green-500 to-teal-500 text-white",
+      class: "bg-linear-to-r from-gray-500 to-gray-200 text-white",
     },
     {
       id: 3,
       total: "1,200", // Dummy data
       label: "Students",
-      class: "bg-gradient-to-r from-yellow-500 to-orange-500 text-white",
+      class: "bg-linear-to-r from-gray-500 to-gray-200 text-white",
     },
     {
       id: 4,
       total: 150, // Dummy data
       label: "Courses",
-      class: "bg-gradient-to-r from-red-500 to-pink-500 text-white",
+      class: "bg-linear-to-r from-gray-500 to-gray-200 text-white",
     },
   ];
 
   return (
     <div className="p-4 overflow-hidden">
-      <h1 className="text-2xl font-bold mb-3">Departments</h1>
+      <h1 className="text-2xl text-white font-bold mb-3">Departments</h1>
       <div className="flex justify-between items-center">
         {/* Breadcrumb row */}
-        <div className="">
+        <div className="text-white">
           <Breadcrumb currentPage="Departments" />
         </div>
         {/* Import and add department row */}
@@ -118,7 +120,7 @@ function Department() {
               setSelectedDepartment(null);
               setIsModalOpen(true);
             }}
-            className="bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 transition-colors inline-block"
+            className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors inline-block shadow-2xl shadow-white border border-white"
           >
             Add Department ➕
           </button>
@@ -156,8 +158,8 @@ function Department() {
         <div className="my-4">
           {isLoading ? (
             <div className="flex items-center justify-center space-x-2 py-10">
-              <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent border-solid rounded-full animate-spin"></div>
-              <span className="text-indigo-500 font-medium">
+              <div className="w-8 h-8 border-4 border-gray-500 border-t-transparent border-solid rounded-full animate-spin"></div>
+              <span className="text-gray-500 font-medium">
                 Loading departments...
               </span>
             </div>
@@ -166,7 +168,7 @@ function Department() {
               No departments found
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-lg">
+            <div className="overflow-x-auto rounded-lg bg-gray-100">
               <table className="border-separate border-spacing-y-2 min-w-200 text-left text-gray-600">
                 <thead>
                   <tr>
@@ -180,10 +182,10 @@ function Department() {
                   </tr>
                 </thead>
                 <tbody>
-                  {departments.map((department) => (
+                  {departments.map((department, i) => (
                     <tr
                       key={department.id}
-                      className="bg-gray-50 border border-gray-200 rounded-lg hover:shadow-sm transition-shadow"
+                      className={`${i % 2 == 0 ? "border-b-2" : "bg-gray-50"} border border-gray-200 rounded-lg hover:shadow-sm transition-shadow`}
                     >
                       <td className="p-4 font-medium text-gray-800">
                         {department.name || "N/A"}
@@ -199,19 +201,18 @@ function Department() {
                       </td>
                       <td className="p-4">Active</td>
                       <td className="p-4">2026-02-13</td>
-                      <td className="flex gap-2">
+                      <td className="flex items-center mt-3 gap-2">
                         <button
                           onClick={() => handleEdit(department)}
-                          className="px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg text-white transition-colors shadow-sm"
+                          className="flex items-center gap-2 px-4 py-2 bg-neutral-600 cursor-pointer hover:border hover:border-stone-800 hover:bg-white hover:text-stone-800 rounded-lg text-white transition-colors shadow-sm"
                         >
-                          Edit
+                          <FiPenTool className="rotate-270" />
                         </button>
                         <button
                           onClick={() => handleDelete(department.id)}
-                          className="text-xs text-red-500 flex items-center gap-1 mt-1 transition-colors w-fit border hover:text-white hover:bg-red-500 border-red-500 hover:border-red-700 px-2 py-1 rounded cursor-pointer"
+                          className="flex items-center py-2 gap-1 text-red-500 border border-red-500 px-4 hover:bg-red-500 hover:text-white rounded cursor-pointer"
                         >
-                          <FiTrash className="text-current" />
-                          <span>Delete Department</span>
+                          <FiTrash className="text-red bg-red" />
                         </button>
                       </td>
                     </tr>
