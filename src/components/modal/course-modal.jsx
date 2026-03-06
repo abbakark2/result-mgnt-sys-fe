@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import axiosClient from "../../axios-client";
 import { X, Loader2, ChevronDown } from "lucide-react";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
@@ -137,11 +136,11 @@ function CourseModal({
     try {
       if (isEditMode) {
         // For edit mode, send the complete form data
-        await axiosClient.put(`/admin/students/${initialData.id}`, formData);
+        // await axiosClient.put(`/admin/students/${initialData.id}`, formData);
         toast.success("Student updated successfully");
       } else {
         // For add mode, send the form data
-        await axiosClient.post("/admin/students", formData);
+        // await axiosClient.post("/admin/students", formData);
         toast.success("Student added successfully");
       }
       onClose();

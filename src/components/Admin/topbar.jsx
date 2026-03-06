@@ -1,14 +1,14 @@
 import React from "react";
 import { useDispatch } from "react-redux";
-import { authActions } from "../../store/auth-slice";
+import { logout } from "../../store/auth-slice";
 import { useNavigate } from "react-router-dom"; // Ensure correct import
 
 export default function TopBar() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const logout = () => {
-    dispatch(authActions.logout());
+  const handleLogout = () => {
+    dispatch(logout());
     navigate("/", { replace: true });
   };
 
@@ -32,7 +32,7 @@ export default function TopBar() {
 
       {/* Logout Button - Enhanced Styles */}
       <button
-        onClick={logout}
+        onClick={handleLogout}
         className="relative group flex items-center justify-center 
                    px-5 py-2 text-sm font-medium text-white
                    bg-red-600 rounded-full overflow-hidden

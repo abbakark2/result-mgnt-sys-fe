@@ -1,5 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React, { useState } from "react";
 import { Link } from "react-router";
 import { toast } from "react-toastify";
 import {
@@ -13,17 +12,18 @@ import {
   FiLayers,
   FiGrid,
 } from "react-icons/fi";
-import axiosClient from "../../axios-client";
-import { facultyActions } from "../../store/faculty-slice";
+import {
+  useGetFacultiesQuery,
+  useUpdateFacultyMutation,
+  useDeleteFacultyMutation,
+  useAddFacultyMutation,
+} from "../../services/api";
 import FacultyModal from "../../components/modal/faculty-modal";
-import { StatCard2 } from "../../components/stat-card2";
-
-/* ─── Inline styles for animations (no Tailwind plugin needed) ─── */
+import { StatCard2 as StatCard } from "../../components/stat-card2";
 import { facultyCSS } from "./faculty-css";
-const css = facultyCSS;
-const StatCard = StatCard2;
 
-/* ─── Stat Card ─── */
+/* ─── Constants ─────────────────────────────────────────────────────────── */
+
 const STATS_CONFIG = [
   {
     key: "faculties",
@@ -39,7 +39,6 @@ const STATS_CONFIG = [
     icon: FiLayers,
     classes:
       "bg-linear-to-b from-gray-800 via-gray-600 to-gray-400 shadow-lg transition-all duration-300",
-
     delay: "stagger-2",
   },
   {
@@ -60,7 +59,10 @@ const STATS_CONFIG = [
   },
 ];
 
-/* ─── Avatar chip ─── */
+const TABLE_HEADERS = ["Faculty", "Departments", "Status", "Actions"];
+
+/* ─── Sub-components ────────────────────────────────────────────────────── */
+
 function FacultyAvatar({ name }) {
   const initials =
     name
@@ -92,7 +94,6 @@ function FacultyAvatar({ name }) {
   );
 }
 
-/* ─── Skeleton Row ─── */
 function SkeletonRows() {
   return Array.from({ length: 5 }).map((_, i) => (
     <tr key={i}>
@@ -135,65 +136,95 @@ function SkeletonRows() {
   ));
 }
 
-/* ─── Main Component ─── */
-function Faculty() {
-  const dispatch = useDispatch();
-  const { faculties = [], isLoading } = useSelector((s) => s.faculty);
+function ActiveBadge() {
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 5,
+        padding: "5px 12px",
+        borderRadius: 999,
+        background: "var(--teal-light)",
+        color: "var(--teal)",
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: "0.05em",
+      }}
+    >
+      <span
+        className="pulse-dot"
+        style={{
+          width: 6,
+          height: 6,
+          borderRadius: "50%",
+          background: "currentColor",
+          display: "inline-block",
+        }}
+      />
+      Active
+    </span>
+  );
+}
 
+function ActionButton({
+  onClick,
+  ariaLabel,
+  title,
+  variant = "edit",
+  children,
+}) {
+  const isEdit = variant === "edit";
+  const baseStyle = {
+    padding: isEdit ? "8px 14px" : "8px 10px",
+    borderRadius: 10,
+    border: "1.5px solid var(--border)",
+    background: "var(--card)",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    fontSize: 13,
+    fontWeight: 600,
+    transition: "background 0.15s, border-color 0.15s",
+    fontFamily: "'DM Sans',sans-serif",
+    color: isEdit ? "var(--teal)" : "#ef4444",
+  };
+  const hoverStyle = isEdit
+    ? { background: "var(--teal-light)", borderColor: "var(--teal)" }
+    : { background: "#fff1f2", borderColor: "#fca5a5" };
+  const restoreStyle = {
+    background: "var(--card)",
+    borderColor: "var(--border)",
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      aria-label={ariaLabel}
+      title={title}
+      style={baseStyle}
+      onMouseEnter={(e) => Object.assign(e.currentTarget.style, hoverStyle)}
+      onMouseLeave={(e) => Object.assign(e.currentTarget.style, restoreStyle)}
+    >
+      {children}
+    </button>
+  );
+}
+
+/* ─── Main Component ────────────────────────────────────────────────────── */
+
+function Faculty() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFaculty, setSelectedFaculty] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [search, setSearch] = useState("");
 
-  const fetchFaculties = useCallback(async () => {
-    try {
-      dispatch(facultyActions.setIsLoading(true));
-      const res = await axiosClient.get("/admin/faculties/data");
-      dispatch(facultyActions.setFaculties(res.data.Faculties));
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to fetch faculties");
-    } finally {
-      dispatch(facultyActions.setIsLoading(false));
-    }
-  }, [dispatch]);
-
-  useEffect(() => {
-    fetchFaculties();
-  }, [fetchFaculties]);
-
-  const handleSubmit = async (formData) => {
-    setIsSubmitting(true);
-    try {
-      const res = await axiosClient.put(
-        `/admin/faculty/${selectedFaculty.id}`,
-        formData,
-      );
-      toast.success(res.data.message || "Faculty updated successfully");
-      setIsModalOpen(false);
-      fetchFaculties();
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Update failed");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleEdit = (faculty) => {
-    setSelectedFaculty(faculty);
-    setIsModalOpen(true);
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this faculty? This action cannot be undone."))
-      return;
-    try {
-      await axiosClient.delete(`/admin/faculty/${id}`);
-      toast.success("Faculty deleted");
-      fetchFaculties();
-    } catch {
-      toast.error("Delete failed");
-    }
-  };
+  // RTK Query — data fetching, caching, and loading state all in one
+  const { data: faculties = [], isLoading } = useGetFacultiesQuery();
+  const [updateFaculty, { isLoading: isSubmitting }] =
+    useUpdateFacultyMutation();
+  const [deleteFaculty] = useDeleteFacultyMutation();
+  const [addFaculty] = useAddFacultyMutation();
 
   const filtered = faculties.filter(
     (f) =>
@@ -208,9 +239,43 @@ function Faculty() {
     courses: 314,
   };
 
+  /* ── Handlers ── */
+
+  const handleEdit = (faculty) => {
+    setSelectedFaculty(faculty);
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = async (formData) => {
+    try {
+      if (selectedFaculty) {
+        await updateFaculty({ id: selectedFaculty.id, ...formData }).unwrap();
+        toast.success("Faculty updated successfully");
+      } else {
+        await addFaculty(formData).unwrap();
+        toast.success("Faculty created successfully");
+      }
+      setIsModalOpen(false);
+    } catch (err) {
+      toast.error(err?.data?.message || "Update failed");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this faculty? This action cannot be undone."))
+      return;
+    try {
+      await deleteFaculty(id).unwrap();
+      toast.success("Faculty deleted");
+    } catch {
+      toast.error("Delete failed");
+    }
+  };
+
+  /* ── Render ── */
   return (
     <>
-      <style>{css}</style>
+      <style>{facultyCSS}</style>
       <div
         className="faculty-root"
         style={{
@@ -240,6 +305,18 @@ function Faculty() {
             }}
           >
             <div>
+              <p
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: "var(--teal)",
+                  marginBottom: 4,
+                }}
+              >
+                Academic Structure
+              </p>
               <h1
                 style={{
                   fontSize: "clamp(28px,5vw,40px)",
@@ -255,6 +332,7 @@ function Faculty() {
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               <button
                 className="btn-ghost"
+                aria-label="Import faculties"
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -269,13 +347,13 @@ function Faculty() {
                   cursor: "pointer",
                   boxShadow: "var(--shadow-sm)",
                 }}
-                aria-label="Import faculties"
               >
                 <FiDownload size={16} /> Import
               </button>
-              <Link
-                to="/admin/faculty/add"
+              <button
+                // to="/admin/faculty/add"
                 className="btn-primary"
+                aria-label="Add new faculty"
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -289,14 +367,14 @@ function Faculty() {
                   textDecoration: "none",
                   boxShadow: "0 4px 14px rgba(245,158,11,0.3)",
                 }}
-                aria-label="Add new faculty"
+                onClick={() => setIsModalOpen(true)}
               >
                 <FiPlus size={18} /> Add Faculty
-              </Link>
+              </button>
             </div>
           </header>
 
-          {/* ── Stats Grid ── */}
+          {/* ── Stats ── */}
           <section
             style={{
               display: "grid",
@@ -341,7 +419,6 @@ function Faculty() {
                 justifyContent: "space-between",
               }}
             >
-              {/* Search */}
               <label
                 style={{
                   position: "relative",
@@ -386,11 +463,8 @@ function Faculty() {
               </label>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 {[
-                  { placeholder: "All Faculties", opts: ["All Faculties"] },
-                  {
-                    placeholder: "Newest first",
-                    opts: ["Newest first", "Oldest first", "A–Z"],
-                  },
+                  { opts: ["All Faculties"] },
+                  { opts: ["Newest first", "Oldest first", "A–Z"] },
                 ].map((sel, i) => (
                   <select
                     key={i}
@@ -416,7 +490,7 @@ function Faculty() {
 
             {/* Body */}
             <div style={{ padding: "8px 0" }} className="bg-gray-100">
-              {/* ── Loading ── */}
+              {/* Loading */}
               {isLoading && (
                 <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -427,7 +501,7 @@ function Faculty() {
                 </div>
               )}
 
-              {/* ── Empty ── */}
+              {/* Empty */}
               {!isLoading && filtered.length === 0 && (
                 <div style={{ textAlign: "center", padding: "64px 24px" }}>
                   <div
@@ -454,15 +528,15 @@ function Faculty() {
                   </p>
                   <p style={{ fontSize: 13, color: "var(--ink-muted)" }}>
                     {search
-                      ? `Try a different search term.`
+                      ? "Try a different search term."
                       : `Click "Add Faculty" to get started.`}
                   </p>
                 </div>
               )}
 
-              {/* ── Mobile Cards ── */}
               {!isLoading && filtered.length > 0 && (
                 <>
+                  {/* Mobile Cards */}
                   <div
                     style={{ display: "grid", gap: 12, padding: "16px" }}
                     className="mobile-list"
@@ -471,7 +545,8 @@ function Faculty() {
                     {filtered.map((faculty, i) => (
                       <article
                         key={faculty.id}
-                        className={`mobile-card animate-scale-in`}
+                        className="mobile-card animate-scale-in"
+                        aria-label={`Faculty: ${faculty.name}`}
                         style={{
                           animationDelay: `${i * 0.04}s`,
                           borderRadius: 18,
@@ -480,7 +555,6 @@ function Faculty() {
                           padding: "18px",
                           boxShadow: "var(--shadow-sm)",
                         }}
-                        aria-label={`Faculty: ${faculty.name}`}
                       >
                         <div
                           style={{
@@ -497,7 +571,7 @@ function Faculty() {
                               gap: 12,
                             }}
                           >
-                            <FacultyAvatar name={faculty.name} />
+                            <FacultyAvatar name={faculty.abbreviation} />
                             <div>
                               <p
                                 style={{
@@ -517,31 +591,7 @@ function Faculty() {
                               </span>
                             </div>
                           </div>
-                          <span
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: 5,
-                              padding: "4px 10px",
-                              borderRadius: 999,
-                              background: "var(--teal-light)",
-                              color: "var(--teal)",
-                              fontSize: 11,
-                              fontWeight: 700,
-                            }}
-                          >
-                            <span
-                              className="pulse-dot"
-                              style={{
-                                width: 6,
-                                height: 6,
-                                borderRadius: "50%",
-                                background: "currentColor",
-                                display: "inline-block",
-                              }}
-                            />
-                            Active
-                          </span>
+                          <ActiveBadge />
                         </div>
 
                         <div
@@ -626,7 +676,6 @@ function Faculty() {
                               background: "#fff",
                               color: "#ef4444",
                               cursor: "pointer",
-                              transition: "background 0.15s",
                             }}
                           >
                             <FiTrash size={16} />
@@ -636,7 +685,7 @@ function Faculty() {
                     ))}
                   </div>
 
-                  {/* ── Desktop Table ── */}
+                  {/* Desktop Table */}
                   <div className="desktop-table" style={{ overflowX: "auto" }}>
                     <style>{`@media(max-width:767px){.desktop-table{display:none!important}}`}</style>
                     <table
@@ -646,31 +695,33 @@ function Faculty() {
                     >
                       <thead>
                         <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                          {["Faculty", "Departments", "Status", "Actions"].map(
-                            (h, i) => (
-                              <th
-                                key={h}
-                                style={{
-                                  padding: "12px 24px",
-                                  fontSize: 11,
-                                  fontWeight: 800,
-                                  letterSpacing: "0.1em",
-                                  textTransform: "uppercase",
-                                  color: "var(--ink-muted)",
-                                  textAlign: i === 3 ? "right" : "left",
-                                }}
-                              >
-                                {h}
-                              </th>
-                            ),
-                          )}
+                          {TABLE_HEADERS.map((h, i) => (
+                            <th
+                              key={h}
+                              style={{
+                                padding: "12px 24px",
+                                fontSize: 11,
+                                fontWeight: 800,
+                                letterSpacing: "0.1em",
+                                textTransform: "uppercase",
+                                color: "var(--ink-muted)",
+                                textAlign: i === 3 ? "right" : "left",
+                              }}
+                            >
+                              {h}
+                            </th>
+                          ))}
                         </tr>
                       </thead>
                       <tbody>
                         {filtered.map((faculty, i) => (
                           <tr
                             key={faculty.id}
-                            className={`row-item animate-fade-up ${i % 2 == 0 ? "bg-gray-50" : ""}`}
+                            className={`row-item animate-fade-up ${i % 2 === 0 ? "bg-gray-50" : ""}`}
+                            style={{
+                              animationDelay: `${i * 0.04}s`,
+                              borderBottom: "1px solid var(--border)",
+                            }}
                           >
                             <td style={{ padding: "16px 24px" }}>
                               <div
@@ -719,32 +770,7 @@ function Faculty() {
                               </span>
                             </td>
                             <td style={{ padding: "16px 24px" }}>
-                              <span
-                                style={{
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: 5,
-                                  padding: "5px 12px",
-                                  borderRadius: 999,
-                                  background: "var(--teal-light)",
-                                  color: "var(--teal)",
-                                  fontSize: 11,
-                                  fontWeight: 700,
-                                  letterSpacing: "0.05em",
-                                }}
-                              >
-                                <span
-                                  className="pulse-dot"
-                                  style={{
-                                    width: 6,
-                                    height: 6,
-                                    borderRadius: "50%",
-                                    background: "currentColor",
-                                    display: "inline-block",
-                                  }}
-                                />
-                                Active
-                              </span>
+                              <ActiveBadge />
                             </td>
                             <td
                               style={{
@@ -760,72 +786,22 @@ function Faculty() {
                                   gap: 4,
                                 }}
                               >
-                                <button
+                                <ActionButton
                                   onClick={() => handleEdit(faculty)}
-                                  aria-label={`Edit ${faculty.name}`}
+                                  ariaLabel={`Edit ${faculty.name}`}
                                   title="Edit faculty"
-                                  style={{
-                                    padding: "8px 14px",
-                                    borderRadius: 10,
-                                    border: "1.5px solid var(--border)",
-                                    background: "var(--card)",
-                                    color: "var(--teal)",
-                                    cursor: "pointer",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 6,
-                                    fontSize: 13,
-                                    fontWeight: 600,
-                                    transition:
-                                      "background 0.15s, border-color 0.15s",
-                                    fontFamily: "'DM Sans',sans-serif",
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    e.currentTarget.style.background =
-                                      "var(--teal-light)";
-                                    e.currentTarget.style.borderColor =
-                                      "var(--teal)";
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    e.currentTarget.style.background =
-                                      "var(--card)";
-                                    e.currentTarget.style.borderColor =
-                                      "var(--border)";
-                                  }}
+                                  variant="edit"
                                 >
                                   <FiEdit2 size={14} /> Edit
-                                </button>
-                                <button
+                                </ActionButton>
+                                <ActionButton
                                   onClick={() => handleDelete(faculty.id)}
-                                  aria-label={`Delete ${faculty.name}`}
+                                  ariaLabel={`Delete ${faculty.name}`}
                                   title="Delete faculty"
-                                  style={{
-                                    padding: "8px 10px",
-                                    borderRadius: 10,
-                                    border: "1.5px solid var(--border)",
-                                    background: "var(--card)",
-                                    color: "#ef4444",
-                                    cursor: "pointer",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    transition:
-                                      "background 0.15s, border-color 0.15s",
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    e.currentTarget.style.background =
-                                      "#fff1f2";
-                                    e.currentTarget.style.borderColor =
-                                      "#fca5a5";
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    e.currentTarget.style.background =
-                                      "var(--card)";
-                                    e.currentTarget.style.borderColor =
-                                      "var(--border)";
-                                  }}
+                                  variant="delete"
                                 >
                                   <FiTrash size={15} />
-                                </button>
+                                </ActionButton>
                               </div>
                             </td>
                           </tr>
@@ -834,7 +810,7 @@ function Faculty() {
                     </table>
                   </div>
 
-                  {/* Footer count */}
+                  {/* Footer */}
                   <div
                     style={{
                       padding: "14px 24px",

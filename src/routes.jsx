@@ -11,6 +11,7 @@ import Department from "./pages/admin/department";
 import Student from "./pages/admin/student";
 import Courses from "./pages/admin/courses";
 import CourseModal from "./components/modal/course-modal";
+import TestPage from "./pages/test";
 
 function AppRoutes() {
   return (
@@ -18,6 +19,7 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/test" element={<TestPage />} />
 
         {/* Protected Route */}
         <Route element={<ProtectedRoute />}>

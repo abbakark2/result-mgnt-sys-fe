@@ -1,41 +1,26 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Formik } from "formik";
 import MainLayout from "../layouts/MainLayout";
 import { loginSchema } from "../schema";
-import axiosClient from "../axios-client";
 import { toast } from "react-toastify";
-import { useDispatch, useSelector } from "react-redux";
-import { authActions } from "../store/auth-slice";
 import { useNavigate } from "react-router-dom";
+import { useLoginMutation } from "../services/api";
 
 function Login() {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
-  const accessToken = useSelector((state) => state.auth.ACCESS_TOKEN);
-
-  // 🔐 Redirect authenticated users away from login
-  useEffect(() => {
-    if (accessToken) {
-      navigate("/admin/dashboard", { replace: true });
-    }
-  }, [accessToken, navigate]);
+  const [loginApi, { isLoading: isSubmitting }] = useLoginMutation();
 
   const submitForm = async (values, { setSubmitting }) => {
     try {
-      setSubmitting(true);
-
-      const res = await axiosClient.post("/login", values);
-      if (res.data.token) {
-        localStorage.setItem("ACCESS_TOKEN", res.data.token);
-        dispatch(authActions.login(res.data.token));
+      const res = await loginApi(values).unwrap();
+      if (res.token) {
+        localStorage.setItem("token", res.token); // Store token securely
         toast.success("Login successful");
+        navigate("/admin/dashboard", { replace: true });
       }
-
-      navigate("/admin/dashboard", { replace: true });
     } catch (error) {
       const message =
-        error.response?.data?.message ||
-        "Login failed. Please check your credentials.";
+        error.data?.message || "Login failed. Please check your credentials.";
       toast.error(message);
     } finally {
       setSubmitting(false);
@@ -49,7 +34,6 @@ function Login() {
           <h1 className="text-xl font-semibold mb-4 text-center">
             Admin Login
           </h1>
-
           <Formik
             initialValues={{ email: "", password: "" }}
             validationSchema={loginSchema}
@@ -62,7 +46,6 @@ function Login() {
               handleChange,
               handleBlur,
               handleSubmit,
-              isSubmitting,
             }) => (
               <form onSubmit={handleSubmit} className="flex flex-col gap-3">
                 <input

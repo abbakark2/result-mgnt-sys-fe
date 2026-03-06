@@ -1,24 +1,15 @@
-import { configureStore, createSlice } from "@reduxjs/toolkit";
-import authSlice from "./auth-slice";
-import userSlice from "./user-slice";
-import facultySlice from "./faculty-slice";
-import departmentSlice from "./department-slice";
-import studentSlice from "./student-slice";
-import courseSlice from "./course-slice";
-import { apiSlice } from "./apiSlice";
+import { configureStore } from "@reduxjs/toolkit";
+import api from "../services/api";
+import { setupListeners } from "@reduxjs/toolkit/query";
 
 const store = configureStore({
   reducer: {
-    auth: authSlice.reducer,
-    user: userSlice.reducer,
-    faculty: facultySlice.reducer,
-    department: departmentSlice.reducer,
-    student: studentSlice.reducer,
-    course: courseSlice.reducer,
-    [apiSlice.reducerPath]: apiSlice.reducer,
+    [api.reducerPath]: api.reducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(apiSlice.middleware),
+    getDefaultMiddleware().concat(api.middleware),
 });
+
+setupListeners(store.dispatch);
 
 export default store;

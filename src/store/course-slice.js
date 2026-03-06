@@ -1,35 +1,42 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axiosClient from "../axios-client";
+import api from "../services/api";
 
-export const fetchCourses = createAsyncThunk(
-  "course/fetch",
-  async (_, { rejectWithValue }) => {
-    try {
-      const res = await axiosClient.get("/admin/course");
-      return res.data;
-    } catch (error) {
-      return rejectWithValue(
-        error?.response?.data || "fetching courses failed",
-      );
-    }
-  },
-);
-
-const courseSlice = createSlice({
-  name: "course",
-  initialState: {
-    courses: [],
-    iscourseLoading: false, // Add isLoading to the initial state
-  },
-  reducers: {
-    setCourses(state, action) {
-      state.courses = action.payload;
-    },
-    setiscourseLoading(state, action) {
-      state.iscourseLoading = action.payload;
-    },
-  },
+const courseApi = api.injectEndpoints({
+  endpoints: (builder) => ({
+    getCourses: builder.query({
+      query: () => "/admin/course",
+      providesTags: ["Courses"],
+    }),
+    addCourse: builder.mutation({
+      query: (newCourse) => ({
+        url: "/admin/course",
+        method: "POST",
+        body: newCourse,
+      }),
+      invalidatesTags: ["Courses"],
+    }),
+    updateCourse: builder.mutation({
+      query: ({ id, ...updatedCourse }) => ({
+        url: `/admin/course/${id}`,
+        method: "PUT",
+        body: updatedCourse,
+      }),
+      invalidatesTags: ["Courses"],
+    }),
+    deleteCourse: builder.mutation({
+      query: (id) => ({
+        url: `/admin/course/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Courses"],
+    }),
+  }),
 });
 
-export const courseActions = courseSlice.actions;
-export default courseSlice;
+export const {
+  useGetCoursesQuery,
+  useAddCourseMutation,
+  useUpdateCourseMutation,
+  useDeleteCourseMutation,
+} = courseApi;
+
+export default courseApi;

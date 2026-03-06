@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
-import axiosClient from "../../axios-client";
 import { toast } from "react-toastify";
-import { useDispatch, useSelector } from "react-redux";
-import { facultyActions } from "../../store/faculty-slice";
+import { useDispatch } from "react-redux";
+import { useGetFacultiesQuery } from "../../services/api";
 
 const DepartmentModal = ({
   isOpen,
@@ -17,22 +16,11 @@ const DepartmentModal = ({
     faculty: "",
   });
 
-  const faculties = useSelector((state) => state.faculty.faculties);
+  const { data: faculties = [] } = useGetFacultiesQuery();
+
   const dispatch = useDispatch();
 
-  const fetchFaculties = async () => {
-    const res = await axiosClient.get("/admin/faculties");
-    if (res.data && res.data.Faculties) {
-      dispatch(facultyActions.setFaculties(res.data.Faculties));
-      toast.success("Faculties fetched successfully");
-    } else {
-      toast.error("Failed to fetch faculties");
-    }
-  };
-
   useEffect(() => {
-    fetchFaculties();
-
     if (initialData) {
       setFormData({
         name: initialData.name || "",

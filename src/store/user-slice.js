@@ -1,21 +1,42 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { api } from "../services/api";
 
-const userSlice = createSlice({
-    name: 'user',
-    initialState: {
-        isLoading: false,
-        userData: [],
-    },
-    reducers:{
-        setUserData(state, action){
-            state.userData = action.payload;
-        },
-        setIsLoading(state,action){
-            state.isLoading = action.payload;
-        }
-    }
+const userApi = api.injectEndpoints({
+  endpoints: (builder) => ({
+    getUsers: builder.query({
+      query: () => "/admin/users",
+      providesTags: ["Users"],
+    }),
+    addUser: builder.mutation({
+      query: (newUser) => ({
+        url: "/admin/users",
+        method: "POST",
+        body: newUser,
+      }),
+      invalidatesTags: ["Users"],
+    }),
+    updateUser: builder.mutation({
+      query: ({ id, ...updatedUser }) => ({
+        url: `/admin/users/${id}`,
+        method: "PUT",
+        body: updatedUser,
+      }),
+      invalidatesTags: ["Users"],
+    }),
+    deleteUser: builder.mutation({
+      query: (id) => ({
+        url: `/admin/users/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Users"],
+    }),
+  }),
 });
 
-export const userActions = userSlice.actions;
+export const {
+  useGetUsersQuery,
+  useAddUserMutation,
+  useUpdateUserMutation,
+  useDeleteUserMutation,
+} = userApi;
 
-export default userSlice;
+export default userApi;

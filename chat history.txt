@@ -1,0 +1,139 @@
+You are a senior React architect and Redux Toolkit expert.
+
+I have an existing React + Redux Toolkit undergraduate student result processing web application.
+
+The system includes:
+
+Authentication (login/logout)
+Students CRUD
+Courses CRUD
+Departments CRUD
+Faculties CRUD
+Result upload and editing
+GPA and CGPA calculation
+Admin dashboard with statistics
+Role-based access control
+The project currently:
+
+Uses Redux Toolkit slices
+Uses createAsyncThunk for API calls
+Uses Axios manually inside thunks
+Stores API responses inside Redux slices
+Manually manages loading and error states
+I want to refactor the ENTIRE project to use RTK Query exclusively for all server communication.
+
+IMPORTANT REQUIREMENTS:
+
+Remove all createAsyncThunk logic related to API calls.
+
+Remove manual Axios usage inside slices.
+
+Replace them with a centralized RTK Query api slice using createApi.
+
+Use fetchBaseQuery or a properly configured baseQuery with token support.
+
+Organize endpoints using proper tagTypes for:
+
+Students
+Courses
+Departments
+Faculties
+Results
+Users
+Auth
+Use:
+
+providesTags for queries
+invalidatesTags for mutations
+Automatic cache invalidation
+Optimistic updates where appropriate (e.g., updating student result)
+Refactor components to:
+
+Replace useDispatch + useSelector for API state
+Use auto-generated RTK Query hooks
+Example:
+useGetStudentsQuery
+useAddStudentMutation
+useUpdateResultMutation
+Remove manual loading and error state management
+Preserve:
+
+Existing UI structure
+Existing routing
+Existing folder structure where possible
+Business logic (GPA/CGPA calculations)
+Authentication flow
+Implement proper authentication handling:
+
+Attach JWT token from Redux auth slice or localStorage to headers
+Handle 401 responses globally
+Optionally implement baseQueryWithReauth
+Improve performance:
+
+Use polling only where necessary
+Avoid unnecessary refetching
+Use selectFromResult when needed
+Ensure:
+
+No breaking changes
+No unnecessary re-renders
+Clean TypeScript types (if project uses TS)
+Proper separation of concerns
+Folder Structure Target:
+
+src/
+├── app/
+│ └── store.js
+├── services/
+│ └── api.js (RTK Query base API)
+├── features/
+│ ├── students/
+│ ├── courses/
+│ ├── departments/
+│ ├── faculties/
+│ ├── results/
+│ └── auth/
+
+Migrate progressively:
+
+First create base api slice
+Then migrate one feature completely (e.g., Students)
+Then replicate pattern across all modules
+After refactor:
+
+Remove unused slices
+Remove unused reducers
+Clean store configuration
+Remove redundant selectors
+Final Output:
+
+Clean RTK Query-based architecture
+Minimal Redux state (only UI + auth if necessary)
+All API logic centralized
+Production-ready structure
+Start by analyzing current slices and refactor one module fully before proceeding to the rest.
+
+Do not break the application.
+Refactor safely and incrementally.
+Explain architectural improvements where necessary.
+
+
+The recurring errors indicate that some RTK Query hooks (e.g., useGetCoursesQuery) are not defined or exported in apiSlice.js, but they are being used in various files. This is likely due to incomplete or inconsistent updates during the refactor.
+
+Plan to Fix All Recurring Errors:
+Audit apiSlice.js:
+
+Ensure all required endpoints (e.g., getCourses, getStudents, getFaculties, etc.) are defined.
+Ensure all hooks (e.g., useGetCoursesQuery, useGetStudentsQuery) are exported.
+Audit All Files:
+
+Search for all RTK Query hooks used in the project.
+Verify that the corresponding endpoints exist in apiSlice.js.
+Fix Missing Endpoints:
+
+Add any missing endpoints to apiSlice.js.
+Export the corresponding hooks.
+Test and Validate:
+
+Ensure all files use the correct hooks.
+Test the application to confirm no further errors.

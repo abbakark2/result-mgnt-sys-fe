@@ -1,7 +1,6 @@
 import React from "react";
 import { Formik } from "formik";
 import * as Yup from "yup";
-import axiosClient from "../../axios-client";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router";
 
@@ -10,9 +9,9 @@ export default function AddFaculty() {
   const handleSubmit = async (values, { resetForm }) => {
     try {
       // Make API call to add faculty
-      const res = await axiosClient.post("/admin/faculties", values);
-      console.log("Submitting faculty:", res.data);
-      toast.success(res.data.message || "New Faculty added successfully");
+      // const res = await axiosClient.post("/admin/faculties", values);
+      // console.log("Submitting faculty:", res.data);
+      // toast.success(res.data.message || "New Faculty added successfully");
       //reset form input fields
       resetForm();
       setTimeout(() => {

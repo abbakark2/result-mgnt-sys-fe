@@ -1,5 +1,4 @@
 import React from "react";
-import AdminLayout from "../../layouts/AdminLayout";
 import StatCard from "../../components/stat-card";
 import { FiUser } from "react-icons/fi";
 import ActivityCard from "../../components/recent-activity";

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Avatar from "../../assets/images/avatar.png";
 import { NavLink } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useGetUserQuery } from "../../services/api";
 import {
   FiHome,
   FiUsers,
@@ -15,8 +15,9 @@ import {
 
 function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
-  const userData = useSelector((state) => state.user.userData);
   const [academicStructureOpen, setAcademicStructureOpen] = useState(false);
+
+  const { data: userData, isLoading, error } = useGetUserQuery();
 
   const navItemClass = ({ isActive }) =>
     `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 hover:text-white cursor-pointer hover:translate-x-1
@@ -71,9 +72,19 @@ function Sidebar() {
             className="w-12 h-12 rounded-full border-2 border-white/50 shadow-md"
           />
           <div className="overflow-hidden">
-            <p className="text-sm font-semibold text-white truncate">
-              {userData?.name || "Admin User"}
-            </p>
+            {isLoading ? (
+              <p className="text-sm font-semibold text-white truncate">
+                Loading...
+              </p>
+            ) : error ? (
+              <p className="text-sm font-semibold text-red-500 truncate">
+                Error loading user
+              </p>
+            ) : (
+              <p className="text-sm font-semibold text-white truncate">
+                {userData?.name || "Admin User"}
+              </p>
+            )}
             <p className="text-[10px] text-peach-200 font-medium">
               SYSTEM ADMINISTRATOR
             </p>
@@ -98,15 +109,12 @@ function Sidebar() {
                 }`}
               onClick={() => setAcademicStructureOpen(!academicStructureOpen)}
             >
-              <div className="flex items-center gap-2 font-medium ">
-                <FiBriefcase className="text-lg" />
-                Academic Structure
-                <FiChevronDown
-                  className={`transition-transform duration-300 ${
-                    academicStructureOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </div>
+              <span className="font-medium">Academic Structure</span>
+              <FiChevronDown
+                className={`transition-transform duration-300 ${
+                  academicStructureOpen ? "rotate-180" : ""
+                }`}
+              />
             </button>
 
             {/* Accordion Content */}

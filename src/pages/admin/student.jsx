@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useMemo } from "react";
-import axiosClient from "../../axios-client";
-import { studentActions } from "../../store/student-slice";
+import {
+  useGetStudentsQuery,
+  useDeleteStudentMutation,
+} from "../../services/api";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import Breadcrumb from "../../components/breadcrumb";
@@ -72,8 +74,8 @@ function SkeletonRows({ count = 5 }) {
 // ── Main Page ──────────────────────────────────────────────────────────────────
 function Student() {
   const dispatch = useDispatch();
-  const students = useSelector((state) => state.student.students);
-  const isLoading = useSelector((state) => state.student.isLoading);
+  const { data: students = [], isLoading, error } = useGetStudentsQuery();
+  const [deleteStudent] = useDeleteStudentMutation();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -81,22 +83,6 @@ function Student() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [deleteId, setDeleteId] = useState(null); // tracks which row is being deleted
-
-  const fetchStudents = async () => {
-    try {
-      dispatch(studentActions.setIsLoading(true));
-      const res = await axiosClient.get("/admin/students");
-      dispatch(studentActions.setStudents(res.data.data));
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to fetch students.");
-    } finally {
-      dispatch(studentActions.setIsLoading(false));
-    }
-  };
-
-  useEffect(() => {
-    fetchStudents();
-  }, [dispatch]);
 
   const handleDelete = async (id) => {
     if (
@@ -107,11 +93,10 @@ function Student() {
       return;
     setDeleteId(id);
     try {
-      await axiosClient.delete(`/admin/students/${id}`);
+      await deleteStudent(id);
       toast.success("Student deleted successfully.");
-      fetchStudents();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to delete student.");
+      toast.error("Failed to delete student.");
     } finally {
       setDeleteId(null);
     }
@@ -160,6 +145,9 @@ function Student() {
       return matchSearch && matchStatus;
     });
   }, [students, searchQuery, statusFilter]);
+
+  if (isLoading) return <SkeletonRows count={5} />;
+  if (error) return <p>Error loading students.</p>;
 
   return (
     <div

@@ -1,59 +1,46 @@
-import React, { useEffect, useState } from "react";
-import axiosClient from "../../axios-client";
-import { departmentActions } from "../../store/department-slice";
-import { useDispatch, useSelector } from "react-redux";
-import { Link } from "react-router";
+import React, { useState } from "react";
 import { toast } from "react-toastify";
 import DepartmentModal from "../../components/modal/department-modal";
-import { FiTrash } from "react-icons/fi";
+import { FiTrash, FiPenTool } from "react-icons/fi";
 import Breadcrumb from "../../components/breadcrumb";
 import Search from "../../components/search";
 import Col2 from "../../components/col2";
-import { fetchDepartments } from "../../store/department-slice";
-import { FiPenTool } from "react-icons/fi";
+import {
+  useGetDepartmentsQuery,
+  useAddDepartmentMutation,
+  useUpdateDepartmentMutation,
+  useDeleteDepartmentMutation,
+} from "../../services/api";
 
 function Department() {
-  const dispatch = useDispatch();
   const [selectedDepartment, setSelectedDepartment] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { departments, isLoading } = useSelector((state) => state.department);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
-    dispatch(fetchDepartments());
-  }, [dispatch]);
+  const { data, isLoading, error } = useGetDepartmentsQuery();
+
+  // Ensure departments is always an array
+  const departments = Array.isArray(data?.data) ? data.data : [];
+
+  const [addDepartment] = useAddDepartmentMutation();
+  const [updateDepartment] = useUpdateDepartmentMutation();
+  const [deleteDepartment] = useDeleteDepartmentMutation();
 
   const handleSubmit = async (formData) => {
-    setIsSubmitting(true);
     try {
-      let res;
       if (selectedDepartment) {
-        res = await axiosClient.put(
-          `/admin/dept/${selectedDepartment.id}`,
-          formData,
-        );
+        await updateDepartment({
+          id: selectedDepartment.id,
+          ...formData,
+        }).unwrap();
+        toast.success("Department updated successfully");
       } else {
-        res = await axiosClient.post("/admin/dept", formData);
+        await addDepartment(formData).unwrap();
+        toast.success("Department added successfully");
       }
-
-      const successMsg = res.data.message || "Operation successful";
-      toast.success(`${res.status} | ${successMsg}`);
-
       setIsModalOpen(false);
-      dispatch(fetchDepartments(true)); // Force refetch after add/edit
+      setSelectedDepartment(null);
     } catch (error) {
-      const statusCode = error.response
-        ? error.response.status
-        : "Network Error";
-      const errorMessage =
-        error.response?.data?.message || "An error occurred during operation";
-      toast.error(
-        <div>
-          <strong>{statusCode}</strong>: {errorMessage}
-        </div>,
-      );
-    } finally {
-      setIsSubmitting(false);
+      toast.error("Failed to save department");
     }
   };
 
@@ -65,10 +52,8 @@ function Department() {
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this department?")) {
       try {
-        await axiosClient.delete(`/admin/dept/${id}`);
+        await deleteDepartment(id).unwrap();
         toast.success("Department deleted successfully");
-        dispatch(fetchDepartments(true));
-        setSelectedDepartment(null);
       } catch (error) {
         toast.error("Failed to delete department");
       }
@@ -163,6 +148,10 @@ function Department() {
                 Loading departments...
               </span>
             </div>
+          ) : error ? (
+            <div className="text-center py-10 text-gray-500 text-lg">
+              Error loading departments
+            </div>
           ) : departments.length === 0 ? (
             <div className="text-center py-10 text-gray-500 text-lg">
               No departments found
@@ -221,13 +210,14 @@ function Department() {
               </table>
             </div>
           )}
-          <DepartmentModal
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            handleSubmit={handleSubmit}
-            initialData={selectedDepartment}
-            isSubmitting={isSubmitting}
-          />
+          {isModalOpen && (
+            <DepartmentModal
+              isOpen={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+              handleSubmit={handleSubmit}
+              initialData={selectedDepartment}
+            />
+          )}
         </div>
       </div>
     </div>

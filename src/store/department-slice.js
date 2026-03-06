@@ -1,11 +1,11 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axiosClient from "../axios-client";
+// import axiosClient from "../axios-client";
 
 export const fetchDepartments = createAsyncThunk(
   "department/fetch",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await axiosClient.get("/admin/dept");
+      // const res = await axiosClient.get("/admin/dept");
       return res.data.Departments; // This becomes the "action.payload" in fulfilled
     } catch (error) {
       return rejectWithValue(

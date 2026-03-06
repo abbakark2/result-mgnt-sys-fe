@@ -1,23 +1,21 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const ACCESS_TOKEN = localStorage.getItem("ACCESS_TOKEN");
-
 const authSlice = createSlice({
-    name: 'auth',
-    initialState: {
-        ACCESS_TOKEN: localStorage.getItem("ACCESS_TOKEN"),
+  name: "auth",
+  initialState: {
+    token: localStorage.getItem("ACCESS_TOKEN"),
+  },
+  reducers: {
+    login(state, action) {
+      state.token = action.payload; // Ensure Redux state is updated
+      localStorage.setItem("ACCESS_TOKEN", action.payload);
     },
-    reducers:{
-        login(state, action){
-            state.ACCESS_TOKEN = action.payload;
-        },
-        logout(state){
-            state.ACCESS_TOKEN = null;
-            localStorage.removeItem("ACCESS_TOKEN");
-        }
-    }
+    logout(state) {
+      state.token = null;
+      localStorage.removeItem("ACCESS_TOKEN");
+    },
+  },
 });
 
-export const authActions = authSlice.actions;
-
-export default authSlice;
+export const { login, logout } = authSlice.actions;
+export default authSlice.reducer;

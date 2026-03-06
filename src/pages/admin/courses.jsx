@@ -1,7 +1,4 @@
 import React, { useEffect, useState } from "react";
-import axiosClient from "../../axios-client";
-import { courseActions } from "../../store/course-slice";
-import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router";
 import { toast } from "react-toastify";
 import { FiTrash } from "react-icons/fi";
@@ -9,68 +6,64 @@ import Breadcrumb from "../../components/breadcrumb";
 import Search from "../../components/search";
 import Col2 from "../../components/col2";
 import CourseModal from "../../components/modal/course-modal";
-import { fetchCourses } from "../../store/course-slice";
+import {
+  useGetCoursesQuery,
+  useUpdateCourseMutation,
+} from "../../store/course-slice"; // Corrected import path
 
 function Courses() {
-  const dispatch = useDispatch();
-  const courses = useSelector((state) => state.course.courses);
-  const iscourseLoading = useSelector((state) => state.course.iscourseLoading);
+  // Data fetching and mutation hooks
+  const { data: courses = [], isLoading: isCourseLoading } =
+    useGetCoursesQuery();
+  const [updateCourse, { isLoading: isSubmitting }] = useUpdateCourseMutation();
 
   // Modal & Submission State
   const [courseModalOpen, setCourseModalOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchCourses();
-  }, [dispatch]);
-
+  // Handle course update
   const handleSubmit = async (formData) => {
-    setIsSubmitting(true);
     try {
-      const res = await axiosClient.put(
-        `/admin/course/${selectedCourse.id}`,
-        formData,
-      );
-
-      const successMsg = res.data.message || "Course updated successfully";
+      const res = await updateCourse({
+        id: selectedCourse.id,
+        ...formData,
+      }).unwrap();
+      const successMsg = res.message || "Course updated successfully";
       toast.success(`${res.status} | ${successMsg}`);
-
-      setIsModalOpen(false);
-      fetchCourses(); // Refresh the list
+      setCourseModalOpen(false);
     } catch (error) {
-      const statusCode = error.response
-        ? error.response.status
-        : "Network Error";
+      const statusCode = error.status || "Network Error";
       const errorMessage =
-        error.response?.data?.message || "An error occurred during update";
+        error.data?.message || "An error occurred during update";
       toast.error(
         <div>
           <strong>{statusCode}</strong>: {errorMessage}
         </div>,
       );
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
+  // Open modal for editing course
   const handleEdit = (course) => {
-    setSelectedcourse(course);
-    setIsModalOpen(true);
+    setSelectedCourse(course);
+    setCourseModalOpen(true);
   };
 
+  // Delete course
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this Course?")) {
       try {
         await axiosClient.delete(`/admin/Course/${id}`);
         toast.success("Course deleted successfully");
-        fetchCourses(); // Refresh the list
+        // Refetch courses data
+        refetch();
       } catch (error) {
         toast.error("Failed to delete Course");
       }
     }
   };
 
+  // Stats data for dashboard
   const statsData = [
     {
       id: 1,
@@ -149,7 +142,7 @@ function Courses() {
           ))}
         </div>
         <div className="my-4">
-          {iscourseLoading ? (
+          {isCourseLoading ? (
             <div className="flex items-center justify-center space-x-2 py-10">
               <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent border-solid rounded-full animate-spin"></div>
               <span className="text-indigo-500 font-medium">
