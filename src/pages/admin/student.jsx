@@ -267,17 +267,19 @@ function Student() {
   /* ── Derived data ── */
   const stats = useMemo(
     () => ({
-      total: students.length,
-      graduated: students.filter((s) => s.status === "graduated").length,
-      spillover: students.filter((s) => s.status === "spillover").length,
-      inactive: students.filter((s) => s.status === "inactive").length,
+      total: (students || []).length,
+      graduated: (students || []).filter((s) => s.status === "graduated")
+        .length,
+      spillover: (students || []).filter((s) => s.status === "spillover")
+        .length,
+      inactive: (students || []).filter((s) => s.status === "inactive").length,
     }),
     [students],
   );
 
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    return students.filter((s) => {
+    return (students || []).filter((s) => {
       const matchSearch =
         !q ||
         s.user?.name?.toLowerCase().includes(q) ||
@@ -362,11 +364,12 @@ function Student() {
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by name, matric, department…"
-                className="w-full pl-9 pr-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl
+                placeholder=" Search by name, matric, department…"
+                className="w-full pr-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl
                            outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400
                            placeholder:text-slate-400 text-slate-700 transition-all duration-200"
                 aria-label="Search students"
+                style={{ paddingLeft: "2.5rem" }}
               />
             </div>
 
@@ -507,7 +510,7 @@ function Student() {
                         </td>
                         {/* Department */}
                         <td className="px-4 py-3.5 text-slate-500 max-w-[180px] truncate">
-                          {student.department?.name || "—"}
+                          {student.user?.department?.name || "—"}
                         </td>
                         {/* Year */}
                         <td className="px-4 py-3.5 text-slate-500 whitespace-nowrap">
@@ -515,9 +518,7 @@ function Student() {
                         </td>
                         {/* Level */}
                         <td className="px-4 py-3.5 text-slate-500 whitespace-nowrap">
-                          {student.current_level
-                            ? `${student.current_level}L`
-                            : "—"}
+                          {student.level ? `${student.level}L` : "—"}
                         </td>
                         {/* Status */}
                         <td className="px-4 py-3.5">

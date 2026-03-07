@@ -34,6 +34,7 @@ const api = createApi({
     // ── Students ──────────────────────────────────────────
     getStudents: builder.query({
       query: () => "/admin/students",
+      transformResponse: (res) => res.data ?? [],
       providesTags: ["Students"],
     }),
     addStudent: builder.mutation({
