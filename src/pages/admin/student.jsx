@@ -509,7 +509,7 @@ function Student() {
                           {student.matric_number || "—"}
                         </td>
                         {/* Department */}
-                        <td className="px-4 py-3.5 text-slate-500 max-w-[180px] truncate">
+                        <td className="px-4 py-3.5 text-slate-500 max-w-45 truncate">
                           {student.user?.department?.name || "—"}
                         </td>
                         {/* Year */}
@@ -526,10 +526,7 @@ function Student() {
                         </td>
                         {/* Actions */}
                         <td className="px-4 py-3.5">
-                          <div
-                            className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100
-                                          transition-opacity duration-150"
-                          >
+                          <div className="flex items-center gap-1.5">
                             <button
                               onClick={() => openEdit(student)}
                               aria-label={`Edit ${student.user?.name}`}
@@ -581,7 +578,7 @@ function Student() {
       <StudentModal
         isOpen={isModalOpen}
         onClose={closeModal}
-        initialData={selectedStudent}
+        initialData={selectedStudent || []}
         isSubmitting={isSubmitting}
         setIsSubmitting={setIsSubmitting}
       />

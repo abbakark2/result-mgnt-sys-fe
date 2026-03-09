@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { X, Loader2, ChevronDown } from "lucide-react";
-import { useSelector } from "react-redux";
-import { useDispatch } from "react-redux";
-import { fetchDepartments } from "../../store/department-slice";
+import {
+  useGetDepartmentsQuery,
+  useGetFacultiesQuery,
+} from "../../services/api";
 
 const INITIAL_FORM = {
   course_code: "",
@@ -63,58 +64,53 @@ function SelectWrapper({ children, isLoading }) {
   );
 }
 
-function CourseModal({
-  isOpen,
-  onClose,
-  initialData,
-  isSubmitting,
-  setIsSubmitting,
-  fetchStudents,
-}) {
+function CourseModal({ isOpen, onClose, initialData, isSubmitting }) {
   const [formData, setFormData] = useState(INITIAL_FORM);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
-  const iscourseLoading = useSelector((state) => state.course.iscourseLoading);
-  const departments = useSelector((state) => state.department.departments);
-  const dispatch = useDispatch();
+  const { data: faculties = [] } = useGetFacultiesQuery();
+  const [departments, setDepartments] = useState([]);
 
   const isEditMode = Boolean(initialData?.id);
-
-  useEffect(() => {
-    if (isOpen) {
-      dispatch(fetchDepartments());
-      if (initialData?.id) {
-        // Map API response data to form structure for edit mode
-        const formData = {
-          course_id: initialData.user?.course_id || "",
-          department_id: initialData.user?.department_id || "",
-        };
-        setFormData(formData);
-      } else {
-        // Reset to initial form for add mode
-        setFormData(INITIAL_FORM);
-      }
-      setErrors({});
-      setTouched({});
-    }
-  }, [isOpen, initialData]);
-
-  // Lock body scroll when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isOpen]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (touched[name]) validateField(name, value);
+    handleFacultyChange(name, value);
+  };
+
+  const handleFacultyChange = (name, value) => {
+    if (name !== "faculty_id") return;
+    faculties.map((faculty) => {
+      if (faculty.id == value) {
+        setDepartments(faculty.departments);
+        console.log("The Faculty is : ", faculty.name);
+        console.log("departments: ", faculty.departments);
+        console.log("faculty id: ", faculty.id);
+        console.log("value: ", value);
+      }
+    });
+
+    console.log(departments);
+  };
+
+  const validateField = (name, value) => {
+    switch (name) {
+      case "course_title":
+        if (!value || value.length < 3) {
+          setErrors((prev) => ({
+            ...prev,
+            course_title:
+              "Course Title is required and must be greater than 3 characters",
+          }));
+          return false;
+        }
+        break;
+
+      default:
+        break;
+    }
   };
 
   const handlecourseChange = (e) => {
@@ -126,32 +122,11 @@ function CourseModal({
   const handleBlur = (e) => {
     const { name, value } = e.target;
     setTouched((prev) => ({ ...prev, [name]: true }));
-    // validateField(name, value);
+    validateField(name, value);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateAll()) return;
-    setIsSubmitting(true);
-    try {
-      if (isEditMode) {
-        // For edit mode, send the complete form data
-        // await axiosClient.put(`/admin/students/${initialData.id}`, formData);
-        toast.success("Student updated successfully");
-      } else {
-        // For add mode, send the form data
-        // await axiosClient.post("/admin/students", formData);
-        toast.success("Student added successfully");
-      }
-      onClose();
-      await fetchStudents();
-    } catch (error) {
-      const msg =
-        error.response?.data?.message || "An error occurred while saving.";
-      toast.error(msg);
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   if (!isOpen) return null;
@@ -299,11 +274,36 @@ function CourseModal({
                     <option value="" disabled>
                       Select semester
                     </option>
-                    {[100, 200, 300, 400, 500].map((lvl) => (
-                      <option key={lvl} value={lvl}>
-                        {lvl} Level
-                      </option>
-                    ))}
+                    <option value="1st">First Semester</option>
+                    <option value="2nd">Second Semester</option>
+                  </select>
+                </SelectWrapper>
+              </FormField>
+
+              {/* Faculty */}
+              <FormField
+                label={`Faculty ${formData.faculty_id}`}
+                required
+                error={errors.faculty_id}
+              >
+                <SelectWrapper isLoading={false}>
+                  <select
+                    name="faculty_id"
+                    value={formData.faculty_id}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={selectClass(errors.faculty_id)}
+                  >
+                    <option value="">Select faculty</option>
+                    {faculties.length > 0 ? (
+                      faculties.map((faculty) => (
+                        <option key={faculty.id} value={faculty.id}>
+                          {faculty.name}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="">No facultys available</option>
+                    )}
                   </select>
                 </SelectWrapper>
               </FormField>

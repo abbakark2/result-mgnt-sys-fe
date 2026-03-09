@@ -3,8 +3,9 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 const baseQuery = fetchBaseQuery({
   baseUrl: import.meta.env.VITE_API_BASE_URL + "/api",
   prepareHeaders: (headers, { getState }) => {
-    const token = getState().auth?.token || localStorage.getItem("token");
-    if (token) headers.set("Authorization", `Bearer ${token}`);
+    const ACCESS_TOKEN =
+      getState().auth?.ACCESS_TOKEN || localStorage.getItem("ACCESS_TOKEN");
+    if (ACCESS_TOKEN) headers.set("Authorization", `Bearer ${ACCESS_TOKEN}`);
     return headers;
   },
 });
@@ -31,34 +32,10 @@ const api = createApi({
       }),
     }),
 
-    // ── Students ──────────────────────────────────────────
-    getStudents: builder.query({
-      query: () => "/admin/students",
-      transformResponse: (res) => res.data ?? [],
-      providesTags: ["Students"],
-    }),
-    addStudent: builder.mutation({
-      query: (newStudent) => ({
-        url: "/students",
-        method: "POST",
-        body: newStudent,
-      }),
-      invalidatesTags: ["Students"],
-    }),
-    updateStudent: builder.mutation({
-      query: ({ id, ...body }) => ({
-        url: `/students/${id}`,
-        method: "PUT",
-        body,
-      }),
-      invalidatesTags: ["Students"],
-    }),
-    deleteStudent: builder.mutation({
-      query: (id) => ({
-        url: `/admin/students/${id}`,
-        method: "DELETE",
-      }),
-      invalidatesTags: ["Students"],
+    // ── User ────────────────────────────────────────────────
+    getUser: builder.query({
+      query: () => "/user",
+      providesTags: ["Users"],
     }),
 
     // ── Faculties ─────────────────────────────────────────
@@ -96,6 +73,10 @@ const api = createApi({
         { type: "Departments", id: facultyId },
       ],
     }),
+    getDepartments: builder.query({
+      query: () => "/admin/dept",
+      providesTags: ["Departments"],
+    }),
     addDepartment: builder.mutation({
       query: (newDepartment) => ({
         url: "/admin/departments",
@@ -119,15 +100,41 @@ const api = createApi({
       }),
       invalidatesTags: ["Departments"],
     }),
-    getDepartments: builder.query({
-      query: () => "/admin/dept",
-      providesTags: ["Departments"],
+
+    // ── Students ──────────────────────────────────────────
+    getStudents: builder.query({
+      query: () => "/admin/students",
+      transformResponse: (res) => res.data ?? [],
+      providesTags: ["Students"],
+    }),
+    addStudent: builder.mutation({
+      query: (newStudent) => ({
+        url: "/admin/students",
+        method: "POST",
+        body: newStudent,
+      }),
+      invalidatesTags: ["Students"],
+    }),
+    updateStudent: builder.mutation({
+      query: ({ id, ...body }) => ({
+        url: `/admin/students/${id}`,
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: ["Students"],
+    }),
+    deleteStudent: builder.mutation({
+      query: (id) => ({
+        url: `/admin/students/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Students"],
     }),
 
-    // ── User ────────────────────────────────────────────────
-    getUser: builder.query({
-      query: () => "/user",
-      providesTags: ["Users"],
+    // COURSES
+    getCourses: builder.query({
+      query: () => "/courses",
+      providesTags: ["Courses"],
     }),
   }),
 });
@@ -148,6 +155,7 @@ export const {
   useUpdateDepartmentMutation, // Added export for updating departments
   useDeleteDepartmentMutation, // Added export for deleting departments
   useGetDepartmentsQuery, // Added export for fetching all departments
+  useGetCoursesQuery,
 } = api;
 
 export default api;

@@ -3,6 +3,8 @@ import { toast } from "react-toastify";
 import {
   useGetFacultiesQuery,
   useGetDepartmentsByFacultyQuery,
+  useUpdateStudentMutation,
+  useAddStudentMutation,
 } from "../../services/api";
 import { X, Loader2, ChevronDown } from "lucide-react";
 
@@ -13,7 +15,7 @@ const INITIAL_FORM = {
   matric_number: "",
   admission_year: "",
   graduation_year: "",
-  current_level: "",
+  level: "",
   mode_entry: "UTME",
   status: "active",
   middle_name: "",
@@ -72,28 +74,21 @@ function SelectWrapper({ children, isLoading }) {
   );
 }
 
-function StudentModal({
-  isOpen,
-  onClose,
-  initialData,
-  isSubmitting,
-  setIsSubmitting,
-  fetchStudents,
-}) {
+function StudentModal({ isOpen, onClose, initialData }) {
   const [formData, setFormData] = useState(INITIAL_FORM);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
 
   const isEditMode = Boolean(initialData?.id);
 
-  const { data: facultiesData, isLoading: isFacultiesLoading } =
-    useGetFacultiesQuery();
+  const [addStudent, { isLoading: isSubmitting, isError, Error }] =
+    useAddStudentMutation();
 
-  const faculties = Array.isArray(facultiesData?.data)
-    ? facultiesData.data
-    : Array.isArray(facultiesData)
-      ? facultiesData
-      : [];
+  const [updateStudent, { isError: isUpdateError, Error: updateError }] =
+    useUpdateStudentMutation();
+
+  const { data: faculties = [], isLoading: isFacultiesLoading } =
+    useGetFacultiesQuery();
 
   const { data: departmentsData, isLoading: isDepartmentsLoading } =
     useGetDepartmentsByFacultyQuery(formData.faculty_id, {
@@ -118,7 +113,7 @@ function StudentModal({
           matric_number: initialData.matric_number || "",
           admission_year: initialData.admission_year || "",
           graduation_year: initialData.graduation_year || "",
-          current_level: initialData.level || "",
+          level: initialData.level || "",
           mode_entry: initialData.mode_entry || "UTME",
           status: initialData.status || "active",
           middle_name: initialData.middle_name || "",
@@ -198,7 +193,7 @@ function StudentModal({
         )
           error = "Graduation year must be after admission year.";
         break;
-      case "current_level":
+      case "level":
         if (!value) error = "Current level is required.";
         break;
       case "dob":
@@ -226,7 +221,7 @@ function StudentModal({
       "matric_number",
       "admission_year",
       "graduation_year",
-      "current_level",
+      "level",
       "dob",
       "gender",
       "faculty_id",
@@ -246,27 +241,29 @@ function StudentModal({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateAll()) return;
-    setIsSubmitting(true);
+    if (!validateAll()) {
+      console.log("validation error occured", validateAll());
+      return;
+    }
     try {
       if (isEditMode) {
         // For edit mode, send the complete form data
-        // await axiosClient.put(`/admin/students/${initialData.id}`, formData);
+        await updateStudent({ id: initialData.id, ...formData }).unwrap();
         toast.success("Student updated successfully");
       } else {
-        // For add mode, send the form data
-        // await axiosClient.post("/admin/students", formData);
+        await addStudent(formData);
         toast.success("Student added successfully");
+        console.log("Submitting the form: ", formData);
+        isError &&
+          toast.error("Failed to add student. Please try again:=> ", Error);
       }
-      onClose();
-      await fetchStudents();
     } catch (error) {
-      const msg =
-        error.response?.data?.message || "An error occurred while saving.";
-      toast.error(msg);
-    } finally {
-      setIsSubmitting(false);
+      const status = `(${error.status})`;
+      const errormsg = status + ": " + error?.data?.message;
+      toast.error(errormsg || "Unknown Error Occured");
+      console.log("error occured: ", error?.data || "________");
     }
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -284,7 +281,7 @@ function StudentModal({
 
       {/* Modal Panel */}
       <div
-        className="relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl shadow-slate-900/20 flex flex-col"
+        className="mt-32 mb-20 md:left-32 relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl shadow-slate-900/20 flex flex-col"
         style={{ maxHeight: "92vh" }}
       >
         {/* Header */}
@@ -308,306 +305,301 @@ function StudentModal({
             <X className="w-5 h-5" />
           </button>
         </div>
-
         {/* Scrollable Body */}
         <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
-          {/* Section: Personal Info */}
-          <section>
-            <p className="text-xs font-bold uppercase tracking-widest text-indigo-500 mb-3">
-              Personal Information
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="sm:col-span-2">
-                <FormField label="Full Name" required error={errors.name}>
+          <form onSubmit={handleSubmit}>
+            {/* Section: Personal Info */}
+            <section>
+              <p className="text-xs font-bold uppercase tracking-widest text-indigo-500 mb-3">
+                Personal Information
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2">
+                  <FormField label="Full Name" required error={errors.name}>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name || ""}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      placeholder="e.g. Aminu Bello"
+                      className={inputClass(errors.name)}
+                    />
+                  </FormField>
+                </div>
+                {/* DoB */}
+                <FormField label="Date of Birth" required error={errors.dob}>
                   <input
-                    type="text"
-                    name="name"
-                    value={formData.name || ""}
+                    type="date"
+                    name="dob"
+                    value={formData.dob || ""}
                     onChange={handleChange}
                     onBlur={handleBlur}
-                    placeholder="e.g. Aminu Bello"
-                    className={inputClass(errors.name)}
+                    className={inputClass(errors.dob)}
+                  />
+                </FormField>
+
+                {/* Gender */}
+                <FormField label="Gender" required error={errors.gender}>
+                  <SelectWrapper>
+                    <select
+                      name="gender"
+                      // React uses this 'value' to determine which option is active
+                      value={formData.gender || ""}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={selectClass(errors.gender)}
+                    >
+                      <option value="">Select gender</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </SelectWrapper>
+                </FormField>
+
+                {/* Email */}
+                <FormField label="Email Address" error={errors.email}>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email || ""}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    placeholder="student@university.edu"
+                    className={inputClass(errors.email)}
+                  />
+                </FormField>
+
+                {/* Phone Number */}
+                <FormField label="Phone Number" error={errors.phone}>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone || ""}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    placeholder="+234 800 000 0000"
+                    className={inputClass(errors.phone)}
                   />
                 </FormField>
               </div>
+            </section>
 
-              <FormField label="Date of Birth" required error={errors.dob}>
-                <input
-                  type="date"
-                  name="dob"
-                  value={formData.dob || ""}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  className={inputClass(errors.dob)}
-                />
-              </FormField>
+            <div className="border-t border-slate-100" />
 
-              {/* Gender */}
-              <FormField label="Gender" required error={errors.gender}>
-                <SelectWrapper>
-                  <select
-                    name="gender"
-                    value={formData.gender || ""}
-                    onChange={handleChange}
-                    selected={formData.gender === "male"}
-                    onBlur={handleBlur}
-                    className={selectClass(errors.gender)}
+            {/* Section: Academic Info */}
+            <section>
+              <p className="text-xs font-bold uppercase tracking-widest text-indigo-500 mb-3">
+                Academic Information
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2">
+                  {/* Metric Number */}
+                  <FormField
+                    label="Matric Number"
+                    required
+                    error={errors.matric_number}
                   >
-                    <option value="">Select gender</option>
-                    <option value="male" selected={formData.gender === "male"}>
-                      Male
-                    </option>
-                    <option
-                      value="female"
-                      selected={formData.gender === "female"}
+                    <input
+                      type="text"
+                      name="matric_number"
+                      value={formData.matric_number || ""}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      placeholder="e.g. UNI/2021/001"
+                      className={inputClass(errors.matric_number)}
+                    />
+                  </FormField>
+                </div>
+
+                {/* Faculty */}
+                <FormField label="Faculty" required error={errors.faculty_id}>
+                  <SelectWrapper isLoading={isFacultiesLoading}>
+                    <select
+                      name="faculty_id"
+                      value={formData.faculty_id}
+                      selected={initialData?.user?.faculty_id}
+                      onChange={handleFacultyChange}
+                      onBlur={handleBlur}
+                      disabled={isFacultiesLoading}
+                      className={selectClass(errors.faculty_id)}
                     >
-                      Female
-                    </option>
-                    <option
-                      value="other"
-                      selected={formData.gender === "other"}
-                    >
-                      Other
-                    </option>
-                  </select>
-                </SelectWrapper>
-              </FormField>
+                      <option value="">
+                        {isFacultiesLoading
+                          ? "Loading faculties…"
+                          : "Select faculty"}
+                      </option>
+                      {faculties.map((f) => (
+                        <option key={f.id} value={f.id}>
+                          {f.name}
+                        </option>
+                      ))}
+                    </select>
+                  </SelectWrapper>
+                </FormField>
 
-              {/* Email */}
-              <FormField label="Email Address" error={errors.email}>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email || ""}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  placeholder="student@university.edu"
-                  className={inputClass(errors.email)}
-                />
-              </FormField>
-
-              {/* Phone Number */}
-              <FormField label="Phone Number" error={errors.phone}>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone || ""}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  placeholder="+234 800 000 0000"
-                  className={inputClass(errors.phone)}
-                />
-              </FormField>
-            </div>
-          </section>
-
-          <div className="border-t border-slate-100" />
-
-          {/* Section: Academic Info */}
-          <section>
-            <p className="text-xs font-bold uppercase tracking-widest text-indigo-500 mb-3">
-              Academic Information
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="sm:col-span-2">
-                {/* Metric Number */}
+                {/* Departments */}
                 <FormField
-                  label="Matric Number"
+                  label="Department"
                   required
-                  error={errors.matric_number}
+                  error={errors.department_id}
+                >
+                  <SelectWrapper isLoading={isDepartmentsLoading}>
+                    <select
+                      name="department_id"
+                      value={formData.department_id}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      disabled={!formData.faculty_id || isDepartmentsLoading}
+                      className={selectClass(errors.department_id)}
+                    >
+                      <option value="">
+                        {!formData.faculty_id
+                          ? "Select a faculty first"
+                          : isDepartmentsLoading
+                            ? "Loading departments…"
+                            : "Select department"}
+                      </option>
+                      {departments.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.name}
+                        </option>
+                      ))}
+                    </select>
+                  </SelectWrapper>
+                </FormField>
+
+                {/* Admission Year */}
+                <FormField
+                  label="Admission Year"
+                  required
+                  error={errors.admission_year}
                 >
                   <input
-                    type="text"
-                    name="matric_number"
-                    value={formData.matric_number || ""}
+                    type="number"
+                    name="admission_year"
+                    value={formData.admission_year}
                     onChange={handleChange}
                     onBlur={handleBlur}
-                    placeholder="e.g. UNI/2021/001"
-                    className={inputClass(errors.matric_number)}
+                    placeholder={`e.g. ${CURRENT_YEAR - 2}`}
+                    min="1900"
+                    max={CURRENT_YEAR}
+                    className={inputClass(errors.admission_year)}
                   />
                 </FormField>
+
+                {/* Graduation year */}
+                <FormField
+                  label="Graduation Year"
+                  error={errors.graduation_year}
+                >
+                  <input
+                    type="number"
+                    name="graduation_year"
+                    value={formData.graduation_year}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    placeholder={`e.g. ${CURRENT_YEAR + 3}`}
+                    min="1900"
+                    max={CURRENT_YEAR + 10}
+                    className={inputClass(errors.graduation_year)}
+                  />
+                </FormField>
+
+                {/* level */}
+                <FormField label="Level" required error={errors.level}>
+                  <SelectWrapper>
+                    <select
+                      name="level"
+                      value={formData.level}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={selectClass(errors.level)}
+                    >
+                      <option value="">Select level</option>
+                      {[100, 200].map((lvl) => (
+                        <option key={lvl} value={lvl}>
+                          {lvl} Level
+                        </option>
+                      ))}
+                    </select>
+                  </SelectWrapper>
+                </FormField>
+
+                {/* Mode of Entry */}
+                <FormField
+                  label="Mode of Entry"
+                  required
+                  error={errors.mode_entry}
+                >
+                  <SelectWrapper>
+                    <select
+                      name="mode_entry"
+                      value={formData.mode_entry}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={selectClass(errors.mode_entry)}
+                    >
+                      <option value="UTME">UTME</option>
+                      <option value="DE">Direct Entry</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </SelectWrapper>
+                </FormField>
+
+                {/* status */}
+                <FormField label="Status" required error={errors.status}>
+                  <SelectWrapper>
+                    <select
+                      name="status"
+                      value={formData.status}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={selectClass(errors.status)}
+                    >
+                      <option value="active">Active</option>
+                      <option value="spillover">Spillover</option>
+                      <option value="graduated">Graduated</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </SelectWrapper>
+                </FormField>
               </div>
-
-              {/* Faculty */}
-              <FormField label="Faculty" required error={errors.faculty_id}>
-                <SelectWrapper isLoading={isFacultiesLoading}>
-                  <select
-                    name="faculty_id"
-                    value={formData.faculty_id}
-                    selected={initialData.user.faculty_id}
-                    onChange={handleFacultyChange}
-                    onBlur={handleBlur}
-                    disabled={isFacultiesLoading}
-                    className={selectClass(errors.faculty_id)}
-                  >
-                    <option value="">
-                      {isFacultiesLoading
-                        ? "Loading faculties…"
-                        : "Select faculty"}
-                    </option>
-                    {facultiesData?.Faculties.map((f) => (
-                      <option key={f.id} value={f.id}>
-                        {f.name}
-                      </option>
-                    ))}
-                  </select>
-                </SelectWrapper>
-              </FormField>
-
-              {/* Departments */}
-              <FormField
-                label="Department"
-                required
-                error={errors.department_id}
-              >
-                <SelectWrapper isLoading={isDepartmentsLoading}>
-                  <select
-                    name="department_id"
-                    value={formData.department_id}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    disabled={!formData.faculty_id || isDepartmentsLoading}
-                    className={selectClass(errors.department_id)}
-                  >
-                    <option value="">
-                      {!formData.faculty_id
-                        ? "Select a faculty first"
-                        : isDepartmentsLoading
-                          ? "Loading departments…"
-                          : "Select department"}
-                    </option>
-                    {departments.map((d) => (
-                      <option key={d.id} value={d.id}>
-                        {d.name}
-                      </option>
-                    ))}
-                  </select>
-                </SelectWrapper>
-              </FormField>
-
-              <FormField
-                label="Admission Year"
-                required
-                error={errors.admission_year}
-              >
-                <input
-                  type="number"
-                  name="admission_year"
-                  value={formData.admission_year}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  placeholder={`e.g. ${CURRENT_YEAR - 2}`}
-                  min="1900"
-                  max={CURRENT_YEAR}
-                  className={inputClass(errors.admission_year)}
-                />
-              </FormField>
-
-              <FormField label="Graduation Year" error={errors.graduation_year}>
-                <input
-                  type="number"
-                  name="graduation_year"
-                  value={formData.graduation_year}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  placeholder={`e.g. ${CURRENT_YEAR + 3}`}
-                  min="1900"
-                  max={CURRENT_YEAR + 10}
-                  className={inputClass(errors.graduation_year)}
-                />
-              </FormField>
-
-              <FormField
-                label="Current Level"
-                required
-                error={errors.current_level}
-              >
-                <SelectWrapper>
-                  <select
-                    name="current_level"
-                    value={formData.current_level}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    className={selectClass(errors.current_level)}
-                  >
-                    <option value="">Select level</option>
-                    {[100, 200, 300, 400, 500].map((lvl) => (
-                      <option key={lvl} value={lvl}>
-                        {lvl} Level
-                      </option>
-                    ))}
-                  </select>
-                </SelectWrapper>
-              </FormField>
-
-              <FormField
-                label="Mode of Entry"
-                required
-                error={errors.mode_entry}
-              >
-                <SelectWrapper>
-                  <select
-                    name="mode_entry"
-                    value={formData.mode_entry}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    className={selectClass(errors.mode_entry)}
-                  >
-                    <option value="UTME">UTME</option>
-                    <option value="DE">Direct Entry</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </SelectWrapper>
-              </FormField>
-
-              <FormField label="Status" required error={errors.status}>
-                <SelectWrapper>
-                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    className={selectClass(errors.status)}
-                  >
-                    <option value="active">Active</option>
-                    <option value="spillover">Spillover</option>
-                    <option value="graduated">Graduated</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
-                </SelectWrapper>
-              </FormField>
-            </div>
-          </section>
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50/70 rounded-b-2xl gap-3">
-          <p className="text-xs text-slate-400">
-            <span className="text-rose-500">*</span> Required fields
-          </p>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200
+            </section>
+            <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50/70 rounded-b-2xl gap-3">
+              <p className="text-xs text-slate-400">
+                <span className="text-rose-500">*</span> Required fields
+              </p>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  disabled={isSubmitting}
+                  className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200
                          rounded-lg hover:bg-slate-100 transition-all duration-150 disabled:opacity-40"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="px-5 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  // disabled={isSubmitting}
+                  className="px-5 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg
                          hover:bg-indigo-700 active:scale-95 transition-all duration-150
                          disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2 min-w-[90px] justify-center"
-            >
-              {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              {isSubmitting ? "Saving…" : isEditMode ? "Update" : "Register"}
-            </button>
-          </div>
+                >
+                  {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {isSubmitting
+                    ? "Saving…"
+                    : isEditMode
+                      ? "Update"
+                      : "Register"}
+                </button>
+              </div>
+            </div>
+          </form>
         </div>
+        {/* Footer */}
       </div>
     </div>
   );

@@ -53,7 +53,7 @@ function Courses() {
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this Course?")) {
       try {
-        await axiosClient.delete(`/admin/Course/${id}`);
+        // await axiosClient.delete(`/admin/Course/${id}`);
         toast.success("Course deleted successfully");
         // Refetch courses data
         refetch();
@@ -90,7 +90,6 @@ function Courses() {
       class: "bg-yellow-100",
     },
   ];
-
   return (
     <div className="p-4 overflow-hidden">
       <h1 className="text-2xl font-bold mb-3">Courses</h1>
@@ -158,46 +157,44 @@ function Courses() {
               <table className="border-separate border-spacing-y-2 min-w-200 text-left text-slate-700">
                 <thead>
                   <tr>
-                    <th className="p-4">Course Name</th>
                     <th className="p-4">Code</th>
-                    <th className="p-4">#Departments</th>
-                    <th className="p-4">#Students</th>
-                    <th className="p-4">#Courses</th>
+                    <th className="p-4">Course Title</th>
+                    <th className="p-4">#Unit</th>
+                    <th className="p-4">Semester</th>
+                    <th className="p-4">#Level</th>
+                    <th className="p-4">Department</th>
                     <th className="p-4">Status</th>
-                    <th className="p-4">Created Date</th>
                     <th className="p-4">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {courses.map((Course) => (
+                  {courses.map((course) => (
                     <tr
-                      key={Course.id}
+                      key={course.id}
                       className="bg-peach-50 border border-stone-200 rounded-lg hover:shadow-sm transition-shadow"
                     >
-                      {/* Course name and abbreviation */}
+                      {/* course name and abbreviation */}
                       <td className="p-4 font-medium text-slate-900">
-                        {Course.name}
+                        {course.course_code}
                       </td>
                       <td className="p-4 text-peach-400 uppercase tracking-wide">
-                        {Course.abbreviation}
+                        {course.course_title}
                       </td>
-                      <td className="p-4 text-center">
-                        {Course?.departments?.length || 0}
-                      </td>
-                      <td>65546</td>
-                      <td>345</td>
+                      <td className="p-4 text-center">{course?.unit || "_"}</td>
+                      <td>{course?.semester || "_"}</td>
+                      <td>{course?.level}L</td>
+                      <td>{course?.department?.name}</td>
                       <td>Active</td>
-                      <td>2026-02-13</td>
                       <td className="flex gap-2">
                         <button
-                          onClick={() => handleEdit(Course)}
+                          onClick={() => handleEdit(course)}
                           className="px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg text-white transition-colors shadow-sm"
                         >
                           Edit
                         </button>
                         {/* Delete Button */}
                         <button
-                          onClick={() => handleDelete(Course.id)}
+                          onClick={() => handleDelete(course.id)}
                           className="text-xs text-red-500 flex items-center gap-1 mt-1 transition-colors w-fit border hover:text-white hover:bg-red-500 border-red-500 hover:border-red-700 px-2 py-1 rounded cursor-pointer"
                         >
                           <FiTrash className="text-current" />

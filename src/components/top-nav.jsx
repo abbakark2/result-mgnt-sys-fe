@@ -4,7 +4,7 @@ import { Link } from "react-router";
 
 function TopNav() {
   return (
-    <nav className="flex justify-around bg-gray-800 max-h-14 items-center">
+    <nav className="flex justify-around bg-gray-800 max-h-14 items-center text-white">
       <div>
         <Link to={"/"}>
           <img src={logo} alt="fes logo" className="max-h-12 py-2" />

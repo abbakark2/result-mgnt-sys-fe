@@ -8,8 +8,11 @@ export default function TopBar() {
   const dispatch = useDispatch();
 
   const handleLogout = () => {
-    dispatch(logout());
-    navigate("/", { replace: true });
+    localStorage.removeItem("ACCESS_TOKEN");
+    const Token = localStorage.getItem("ACCESS_TOKEN");
+    if (!Token || Token == "") {
+      navigate("/", { replace: true });
+    }
   };
 
   return (
@@ -42,7 +45,7 @@ export default function TopBar() {
       >
         <span className="relative z-10">Logout</span>
         {/* Subtle hover shine effect */}
-        <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+        <div className="absolute inset-0 w-full h-full bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
       </button>
     </header>
   );

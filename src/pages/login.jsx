@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Formik } from "formik";
 import MainLayout from "../layouts/MainLayout";
 import { loginSchema } from "../schema";
@@ -9,12 +9,13 @@ import { useLoginMutation } from "../services/api";
 function Login() {
   const navigate = useNavigate();
   const [loginApi, { isLoading: isSubmitting }] = useLoginMutation();
+  const Token = localStorage.getItem("ACCESS_TOKEN");
 
   const submitForm = async (values, { setSubmitting }) => {
     try {
       const res = await loginApi(values).unwrap();
       if (res.token) {
-        localStorage.setItem("token", res.token); // Store token securely
+        localStorage.setItem("ACCESS_TOKEN", res.token); // Store token securely
         toast.success("Login successful");
         navigate("/admin/dashboard", { replace: true });
       }
@@ -26,6 +27,12 @@ function Login() {
       setSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    if (Token) {
+      navigate("/admin/dashboard", { replace: true });
+    }
+  }, []);
 
   return (
     <MainLayout>
