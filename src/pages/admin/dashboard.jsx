@@ -48,7 +48,7 @@ function Dashboard() {
 
           <div className="p-4 bg-white rounded-lg shadow-lg">
             <h1>Recent Activity </h1>
-            <div className="max-h-[250px] overflow-auto">
+            <div className="max-h-62.5 overflow-auto">
               <ActivityCard />
               <ActivityCard />
               <ActivityCard />

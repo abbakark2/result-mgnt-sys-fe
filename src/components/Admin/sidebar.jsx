@@ -16,6 +16,8 @@ import {
 function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const [academicStructureOpen, setAcademicStructureOpen] = useState(false);
+  const [operationStructureOpen, setOperationStructureOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const { data: userData, isLoading, error } = useGetUserQuery();
 
@@ -32,7 +34,7 @@ function Sidebar() {
       {/* Mobile toggle */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="md:hidden fixed top-4 left-4 z-50 bg-white/90 backdrop-blur-md rounded-lg px-3 py-2 shadow-xl border border-peach-200/40"
+        className={`${isOpen ? "hidden" : ""} cursor-pointer md:hidden fixed top-4 left-4 z-99 bg-white/90 backdrop-blur-md rounded-lg px-3 py-2 shadow-xl border border-peach-200/40`}
       >
         <span className="text-peach-800 font-bold">☰</span>
       </button>
@@ -49,6 +51,12 @@ function Sidebar() {
           md:translate-x-0
         `}
       >
+        <button
+          onClick={() => setIsOpen(false)}
+          className="text-orange-800 font-extrabold text-xl absolute right-2 top-2 border px-4 py-2 rounded-2xl shadow-lg hover:text-orange-800 hover:bg-gray-100 cursor-pointer"
+        >
+          X
+        </button>
         {/* Brand */}
         <div className="flex gap-4 px-6 py-8 border-b border-white/20 items-center">
           <div className="bg-peach-500/30 w-12 h-12 rounded-2xl flex items-center justify-center mb-3 border border-peach-300/40 shadow-inner">
@@ -128,22 +136,76 @@ function Sidebar() {
               <div className="pl-6 border-l-2 border-white/30 ml-6">
                 <NavLink to="/admin/faculty" className={navItemClass}>
                   <FiLayers className="text-white" />
-                  <span className="text-sm">Faculties</span>
+                  <span className="text-lg">Faculties</span>
                 </NavLink>
 
                 <NavLink to="/admin/department" className={navItemClass}>
                   <FiUsers className="text-white" />
-                  <span className="text-sm">Departments</span>
+                  <span className="text-lg">Departments</span>
                 </NavLink>
 
                 <NavLink to="/admin/students" className={navItemClass}>
                   <FiUsers className="text-lg text-white" />
-                  <span className="font-medium">Students</span>
+                  <span className="font-sm">Students</span>
                 </NavLink>
 
                 <NavLink to="/admin/courses" className={navItemClass}>
                   <FiBook className="text-lg text-white" />
-                  <span className="font-medium">Courses</span>
+                  <span className="font-sm">Courses</span>
+                </NavLink>
+              </div>
+            </div>
+          </div>
+
+          {/* OPERATIONS _______________________________________________________________________________________________ */}
+          <div>
+            <button
+              className={`w-full cursor-pointer hover:translate-x-1 flex items-center justify-between gap-3 px-4 py-3 rounded-xl transition-all duration-300 hover:text-white hover:border hover:border-white hover:shadow-lg
+                ${
+                  operationStructureOpen
+                    ? "bg-peach-700/60 text-white"
+                    : "text-peach-200 hover:bg-peach-500/20"
+                }`}
+              onClick={() => setOperationStructureOpen(!operationStructureOpen)}
+            >
+              <span className="font-medium">Operation Structure</span>
+              <FiChevronDown
+                className={`transition-transform duration-300 ${
+                  operationStructureOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {/* Accordion Content */}
+            <div
+              className={`overflow-hidden transition-all duration-500 ease-in-out ${
+                operationStructureOpen
+                  ? "max-h-50 opacity-100 mt-2"
+                  : "max-h-0 opacity-0"
+              }`}
+            >
+              <div className="pl-6 border-l-2 border-white/30 ml-6">
+                <NavLink
+                  to="/admin/course/registration"
+                  className={navItemClass}
+                >
+                  <FiLayers className="text-white" />
+                  <span className="text-sm">Course Registration</span>
+                </NavLink>
+
+                <NavLink to="/admin/department" className={navItemClass}>
+                  <FiUsers className="text-white" />
+                  <span className="text-sm">Results</span>
+                </NavLink>
+
+                <NavLink to="/admin/students" className={navItemClass}>
+                  <FiUsers className="text-lg text-white" />
+                  <span className="font-sm">Reports</span>
+                </NavLink>
+
+                <NavLink to="/admin/courses" className={navItemClass}>
+                  <FiBook className="text-lg text-white" />
+                  <span className="font-sm">Transcripts</span>
                 </NavLink>
               </div>
             </div>
@@ -151,14 +213,53 @@ function Sidebar() {
 
           <NavLink to="/admin/uploads" className={navItemClass}>
             <FiUpload className="text-lgtext-white" />
-            <span className="font-medium">Excel Uploads</span>
+            <span className="font-sm">Excel Uploads</span>
           </NavLink>
 
+          {/* SETTINGS _______________________________________________________________________________________________ */}
           <div className="pt-4 mt-4 border-t border-white/30">
-            <NavLink to="/admin/settings" className={navItemClass}>
-              <FiSettings className="text-lg text-white group-hover:text-white/80 transition-colors duration-300" />
-              <span className="font-medium">Settings</span>
-            </NavLink>
+            <div>
+              <button
+                className={`w-full cursor-pointer hover:translate-x-1 flex items-center justify-between gap-3 px-4 py-3 rounded-xl transition-all duration-300 hover:text-white hover:border hover:border-white hover:shadow-lg
+                ${
+                  settingsOpen
+                    ? "bg-peach-700/60 text-white"
+                    : "text-peach-200 hover:bg-peach-500/20"
+                }`}
+                onClick={() => setSettingsOpen(!settingsOpen)}
+              >
+                <span className="flex gap-4 items-center font-medium">
+                  <FiSettings className="text-lg text-white group-hover:text-white/80 transition-colors duration-300" />
+                  Settings
+                </span>
+                <FiChevronDown
+                  className={`transition-transform duration-300 ${
+                    settingsOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {/* Accordion Content */}
+              <div
+                className={`overflow-hidden transition-all duration-500 ease-in-out ${
+                  settingsOpen
+                    ? "max-h-50 opacity-100 mt-2"
+                    : "max-h-0 opacity-0"
+                }`}
+              >
+                <div className="pl-6 border-l-2 border-white/30 ml-6">
+                  <NavLink to="/settings/academic" className={navItemClass}>
+                    <FiLayers className="text-white" />
+                    <span className="text-sm">Academic Settings</span>
+                  </NavLink>
+
+                  <NavLink to="/admin/department" className={navItemClass}>
+                    <FiUsers className="text-white" />
+                    <span className="text-sm">System Settings</span>
+                  </NavLink>
+                </div>
+              </div>
+            </div>
           </div>
         </nav>
       </aside>

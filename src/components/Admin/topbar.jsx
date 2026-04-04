@@ -6,10 +6,11 @@ import { useNavigate } from "react-router-dom"; // Ensure correct import
 export default function TopBar() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const Token = localStorage.getItem("ACCESS_TOKEN");
 
   const handleLogout = () => {
     localStorage.removeItem("ACCESS_TOKEN");
-    const Token = localStorage.getItem("ACCESS_TOKEN");
+    dispatch(logout());
     if (!Token || Token == "") {
       navigate("/", { replace: true });
     }
@@ -28,7 +29,7 @@ export default function TopBar() {
                  transition-all duration-300"
     >
       {/* Title - Hidden on very small screens or truncated to save space */}
-      <h1 className="text-sm md:text-lg font-bold tracking-tight text-white truncate mr-4">
+      <h1 className=" pl-11 text-sm md:text-lg font-bold tracking-tight text-white truncate mr-4">
         <span className="hidden sm:inline">University Student </span>
         Undergraduate Results
       </h1>
@@ -37,10 +38,10 @@ export default function TopBar() {
       <button
         onClick={handleLogout}
         className="relative group flex items-center justify-center 
-                   px-5 py-2 text-sm font-medium text-white
-                   bg-red-600 rounded-full overflow-hidden
+                   px-5 py-2 text-sm font-medium bg-gray-400
+                   text-red-600 rounded-full overflow-hidden
                    shadow-[0_0_15px_rgba(220,38,38,0.3)]
-                   hover:bg-red-500 hover:shadow-[0_0_20px_rgba(220,38,38,0.5)]
+                   hover:bg-gray-800  hover:shadow-[0_0_20px_rgba(220,38,38,0.5)]
                    active:scale-95 transition-all duration-200 cursor-pointer"
       >
         <span className="relative z-10">Logout</span>

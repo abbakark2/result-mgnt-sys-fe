@@ -3,9 +3,9 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 const baseQuery = fetchBaseQuery({
   baseUrl: import.meta.env.VITE_API_BASE_URL + "/api",
   prepareHeaders: (headers, { getState }) => {
-    const ACCESS_TOKEN =
-      getState().auth?.ACCESS_TOKEN || localStorage.getItem("ACCESS_TOKEN");
-    if (ACCESS_TOKEN) headers.set("Authorization", `Bearer ${ACCESS_TOKEN}`);
+    const token =
+      getState().auth?.token || localStorage.getItem("ACCESS_TOKEN");
+    if (token) headers.set("Authorization", `Bearer ${token}`);
     return headers;
   },
 });
@@ -29,6 +29,12 @@ const api = createApi({
         url: "/login",
         method: "POST",
         body: credentials,
+      }),
+    }),
+    logout: builder.mutation({
+      query: () => ({
+        url: "/logout",
+        method: "POST",
       }),
     }),
 
@@ -75,6 +81,7 @@ const api = createApi({
     }),
     getDepartments: builder.query({
       query: () => "/admin/dept",
+      transformResponse: (res) => res.data ?? [],
       providesTags: ["Departments"],
     }),
     addDepartment: builder.mutation({
@@ -107,6 +114,15 @@ const api = createApi({
       transformResponse: (res) => res.data ?? [],
       providesTags: ["Students"],
     }),
+    getStudent: builder.query({
+      query: (id) => ({
+        url: `/student`,
+        method: "GET",
+        params: { id },
+      }),
+      transformResponse: (res) => res ?? null, // ✅ the object IS the data
+      providesTags: (result, error, id) => [{ type: "Student", id }],
+    }),
     addStudent: builder.mutation({
       query: (newStudent) => ({
         url: "/admin/students",
@@ -134,28 +150,77 @@ const api = createApi({
     // COURSES
     getCourses: builder.query({
       query: () => "/courses",
+      transformResponse: (res) => res.data ?? res,
       providesTags: ["Courses"],
+    }),
+    addCourse: builder.mutation({
+      query: (newCourse) => ({
+        url: "/courses",
+        method: "POST",
+        body: newCourse,
+      }),
+      invalidatesTags: ["Courses"],
+    }),
+    updateCourse: builder.mutation({
+      query: ({ id, ...body }) => ({
+        url: `/courses/${id}`,
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: ["Courses"],
+    }),
+    deleteCourse: builder.mutation({
+      query: (id) => ({
+        url: `/courses/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Courses"],
+    }),
+    getCourseByDeptLevel: builder.query({
+      query: ({ dept, level, semester }) =>
+        `/${dept}/courses/${semester}/${level}`, // adjust to match your actual route
+      transformResponse: (res) => {
+        // console.log("TRANSFORM RAW:", res); // 👈 See exact shape before it hits component
+        return res;
+      },
+      providesTags: ["CoursesDeptLevel"],
+    }),
+    getAcademicSession: builder.query({
+      query: () => "/academic/session",
+      transformResponse: (res) => res.data ?? res,
+      providesTags: ["academicSession"],
     }),
   }),
 });
 
 export const {
   useLoginMutation,
+  useGetUserQuery, // Added export for fetching user data
+  // Students____________________________________________________________________
   useGetStudentsQuery,
+  useLazyGetStudentQuery,
   useAddStudentMutation,
   useUpdateStudentMutation,
   useDeleteStudentMutation,
+  // Faculties____________________________________________________________________
   useAddFacultyMutation,
   useGetFacultiesQuery,
   useUpdateFacultyMutation,
   useDeleteFacultyMutation,
+  // Departments__________________________________________________________________
   useGetDepartmentsByFacultyQuery,
-  useGetUserQuery, // Added export for fetching user data
   useAddDepartmentMutation, // Added export for adding departments
   useUpdateDepartmentMutation, // Added export for updating departments
   useDeleteDepartmentMutation, // Added export for deleting departments
   useGetDepartmentsQuery, // Added export for fetching all departments
+  // Courses______________________________________________________________________
   useGetCoursesQuery,
+  useLazyGetCourseByDeptLevelQuery,
+  useAddCourseMutation,
+  useUpdateCourseMutation,
+  useDeleteCourseMutation,
+  // SETTINGS_________________________________________________________
+  useGetAcademicSessionQuery,
 } = api;
 
 export default api;

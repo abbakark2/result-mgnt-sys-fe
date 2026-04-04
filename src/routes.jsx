@@ -10,8 +10,12 @@ import AddFaculty from "./pages/admin/add-faculty";
 import Department from "./pages/admin/department";
 import Student from "./pages/admin/student";
 import Courses from "./pages/admin/courses";
+import CourseRegistration from "./pages/course-registration";
 import CourseModal from "./components/modal/course-modal";
 import TestPage from "./pages/test";
+import StudentDashboard from "./pages/student/dashboard";
+import StudentLayout from "./layouts/StudentLayout";
+import AcademicSettings from "./pages/admin/settings/academic-settings";
 
 function AppRoutes() {
   return (
@@ -20,10 +24,12 @@ function AppRoutes() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/test" element={<TestPage />} />
+        <Route path="/unauthorized" element={<h1>Unauthorized Access</h1>} />
 
         {/* Protected Route */}
-        <Route element={<ProtectedRoute />}>
+        <Route element={<ProtectedRoute allowedRoles={["super_admin"]} />}>
           <Route element={<AdminLayout />}>
+            <Route path="/settings/academic" element={<AcademicSettings />} />
             <Route path="/admin/dashboard" element={<Dashboard />} />
             <Route path="/admin/faculty" element={<Faculty />} />
             <Route path="/admin/faculty/add" element={<AddFaculty />} />
@@ -34,6 +40,15 @@ function AppRoutes() {
             {/* Couses ROUTES */}
             <Route path="/admin/courses" element={<Courses />} />
             <Route path="/admin/courses/add" element={<CourseModal />} />
+            <Route
+              path="/admin/course/registration"
+              element={<CourseRegistration />}
+            />
+          </Route>
+
+          {/* Student Routes */}
+          <Route element={<StudentLayout />}>
+            <Route path="/student/dashboard" element={<StudentDashboard />} />
           </Route>
         </Route>
 
