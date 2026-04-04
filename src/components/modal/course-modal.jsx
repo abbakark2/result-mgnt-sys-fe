@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "react-toastify";
 import { X, Loader2, ChevronDown, Search, AlertCircle } from "lucide-react";
+import { useGetFacultiesQuery } from "../../features/faculties/facultyApi";
 import {
-  useGetFacultiesQuery,
   useAddCourseMutation,
   useUpdateCourseMutation,
-} from "../../services/api";
+} from "../../features/courses/courseApi";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 

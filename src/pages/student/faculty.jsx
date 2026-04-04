@@ -17,7 +17,7 @@ import {
   useUpdateFacultyMutation,
   useDeleteFacultyMutation,
   useAddFacultyMutation,
-} from "../../services/api";
+} from "../../features/faculties/facultyApi";
 import FacultyModal from "../../components/modal/faculty-modal";
 import { StatCard2 as StatCard } from "../../components/stat-card2";
 import { facultyCSS } from "./faculty-css";

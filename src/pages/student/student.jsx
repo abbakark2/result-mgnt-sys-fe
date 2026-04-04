@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 import {
   useGetStudentsQuery,
   useDeleteStudentMutation,
-} from "../../services/api";
+} from "../../features/students/studentApi";
 import StudentModal from "../../components/modal/student-modal";
 import {
   FiTrash2,

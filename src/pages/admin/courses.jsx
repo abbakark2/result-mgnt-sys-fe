@@ -9,7 +9,7 @@ import CourseModal from "../../components/modal/course-modal";
 import {
   useGetCoursesQuery,
   useDeleteCourseMutation,
-} from "../../services/api";
+} from "../../features/courses/courseApi";
 
 function Courses() {
   const { data: courses = [], isLoading: isCourseLoading } =

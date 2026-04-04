@@ -4,7 +4,7 @@ import MainLayout from "../layouts/MainLayout";
 import { loginSchema } from "../schema";
 import { toast } from "react-toastify";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useLoginMutation } from "../services/api";
+import { useLoginMutation } from "../features/auth/authApi";
 
 import { useDispatch, useSelector } from "react-redux";
 import {

@@ -1,33 +1,42 @@
-import { apiSlice } from "../app/api/apiSlice";
+import { apiSlice } from "../../app/api/apiSlice";
 
-const courseApi = apiSlice.injectEndpoints({
+export const courseApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getCourses: builder.query({
-      query: () => "/admin/course",
+      query: () => "/courses",
+      transformResponse: (res) => res.data ?? res,
       providesTags: ["Courses"],
     }),
     addCourse: builder.mutation({
       query: (newCourse) => ({
-        url: "/admin/course",
+        url: "/courses",
         method: "POST",
         body: newCourse,
       }),
       invalidatesTags: ["Courses"],
     }),
     updateCourse: builder.mutation({
-      query: ({ id, ...updatedCourse }) => ({
-        url: `/admin/course/${id}`,
+      query: ({ id, ...body }) => ({
+        url: `/courses/${id}`,
         method: "PUT",
-        body: updatedCourse,
+        body,
       }),
       invalidatesTags: ["Courses"],
     }),
     deleteCourse: builder.mutation({
       query: (id) => ({
-        url: `/admin/course/${id}`,
+        url: `/courses/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Courses"],
+    }),
+    getCourseByDeptLevel: builder.query({
+      query: ({ dept, level, semester }) =>
+        `/${dept}/courses/${semester}/${level}`,
+      transformResponse: (res) => {
+        return res;
+      },
+      providesTags: ["CoursesDeptLevel"],
     }),
   }),
   overrideExisting: false,
@@ -35,9 +44,8 @@ const courseApi = apiSlice.injectEndpoints({
 
 export const {
   useGetCoursesQuery,
+  useLazyGetCourseByDeptLevelQuery,
   useAddCourseMutation,
   useUpdateCourseMutation,
   useDeleteCourseMutation,
 } = courseApi;
-
-export default courseApi;

@@ -1,11 +1,8 @@
 import React, { useEffect } from "react";
-import { useGetAcademicSessionQuery } from "../../../services/api";
+import { useGetAcademicSessionQuery } from "../../../features/settings/settingsApi";
 
 function AcademicSettings() {
   const { data: sessions = [], isLoading } = useGetAcademicSessionQuery();
-  useEffect(() => {
-    console.log(sessions);
-  });
   return (
     <div className="m-5 p-4 bg-gray-200 rounded-lg shadow-lg">
       <h1 className="font-bold text-2xl mb-4">Academic Settings</h1>

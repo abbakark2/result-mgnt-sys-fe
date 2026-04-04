@@ -1,32 +1,30 @@
-import { apiSlice } from "../app/api/apiSlice";
+import { apiSlice } from "../../app/api/apiSlice";
 
-const facultyApi = apiSlice.injectEndpoints({
+export const facultyApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getFaculties: builder.query({
-      query: () => "/admin/faculties",
+      query: () => "/admin/faculties/data",
       providesTags: ["Faculties"],
+      transformResponse: (res) => res.Faculties ?? [],
     }),
     addFaculty: builder.mutation({
       query: (newFaculty) => ({
-        url: "/admin/faculties",
+        url: "/admin/faculty",
         method: "POST",
         body: newFaculty,
       }),
       invalidatesTags: ["Faculties"],
     }),
     updateFaculty: builder.mutation({
-      query: ({ id, ...updatedFaculty }) => ({
-        url: `/admin/faculties/${id}`,
+      query: ({ id, ...body }) => ({
+        url: `/admin/faculty/${id}`,
         method: "PUT",
-        body: updatedFaculty,
+        body,
       }),
       invalidatesTags: ["Faculties"],
     }),
     deleteFaculty: builder.mutation({
-      query: (id) => ({
-        url: `/admin/faculties/${id}`,
-        method: "DELETE",
-      }),
+      query: (id) => ({ url: `/admin/faculty/${id}`, method: "DELETE" }),
       invalidatesTags: ["Faculties"],
     }),
   }),
@@ -39,5 +37,3 @@ export const {
   useUpdateFacultyMutation,
   useDeleteFacultyMutation,
 } = facultyApi;
-
-export default facultyApi;

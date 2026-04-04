@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
+import { useGetFacultiesQuery } from "../../features/faculties/facultyApi";
+import { useGetDepartmentsByFacultyQuery } from "../../features/departments/departmentApi";
 import {
-  useGetFacultiesQuery,
-  useGetDepartmentsByFacultyQuery,
   useUpdateStudentMutation,
   useAddStudentMutation,
-} from "../../services/api";
+} from "../../features/students/studentApi";
 import { X, Loader2, ChevronDown } from "lucide-react";
 
 const INITIAL_FORM = {

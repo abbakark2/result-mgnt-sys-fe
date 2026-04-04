@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Avatar from "../../assets/images/avatar.png";
 import { NavLink } from "react-router-dom";
-import { useGetUserQuery } from "../../services/api";
+import { useGetUserQuery } from "../../features/users/userApi";
 import {
   FiHome,
   FiUsers,

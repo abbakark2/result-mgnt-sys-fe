@@ -2,11 +2,9 @@ import React, { useState, useEffect, useMemo } from "react";
 import Heading from "../components/heading";
 import Button from "../components/button";
 import avatar from "../assets/images/avatar.png";
-import {
-  useGetDepartmentsQuery,
-  useLazyGetCourseByDeptLevelQuery,
-  useLazyGetStudentQuery,
-} from "../services/api";
+import { useGetDepartmentsQuery } from "../features/departments/departmentApi";
+import { useLazyGetCourseByDeptLevelQuery } from "../features/courses/courseApi";
+import { useLazyGetStudentQuery } from "../features/students/studentApi";
 
 /**
  * Student Display Card

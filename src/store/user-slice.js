@@ -1,6 +1,6 @@
-import { api } from "../services/api";
+import { apiSlice } from "../app/api/apiSlice";
 
-const userApi = api.injectEndpoints({
+const userApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getUsers: builder.query({
       query: () => "/admin/users",
@@ -30,6 +30,7 @@ const userApi = api.injectEndpoints({
       invalidatesTags: ["Users"],
     }),
   }),
+  overrideExisting: false,
 });
 
 export const {

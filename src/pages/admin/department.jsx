@@ -10,7 +10,7 @@ import {
   useAddDepartmentMutation,
   useUpdateDepartmentMutation,
   useDeleteDepartmentMutation,
-} from "../../services/api";
+} from "../../features/departments/departmentApi";
 
 function Department() {
   const [selectedDepartment, setSelectedDepartment] = useState(null);
