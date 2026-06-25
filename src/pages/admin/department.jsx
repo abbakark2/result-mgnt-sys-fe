@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import DepartmentModal from "../../components/modal/department-modal";
 import { FiTrash, FiPenTool } from "react-icons/fi";
@@ -19,7 +19,7 @@ function Department() {
   const { data, isLoading, error } = useGetDepartmentsQuery();
 
   // Ensure departments is always an array
-  const departments = Array.isArray(data?.data) ? data.data : [];
+  const departments = data ?? [];
 
   const [addDepartment] = useAddDepartmentMutation();
   const [updateDepartment] = useUpdateDepartmentMutation();

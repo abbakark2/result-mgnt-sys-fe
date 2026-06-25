@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { toast } from "react-toastify";
 import {
   useGetStudentsQuery,
@@ -16,6 +16,7 @@ import {
   FiAlertCircle,
   FiUserX,
 } from "react-icons/fi";
+import { Link } from "react-router";
 
 /* ─── Constants ─────────────────────────────────────────────────────────────── */
 
@@ -157,6 +158,26 @@ function SkeletonTable({ rows = 6 }) {
   );
 }
 
+const FooterPagination = ({ studentPageLinks }) => {
+  return (
+    <div className="flex gap-4">
+      {studentPageLinks
+        ?.filter((link) => !isNaN(link.label))
+        .map((link, i) => {
+          return (
+            <Link
+              to={link.url}
+              key={i}
+              className={link.active ? "font-bold text-blue-600" : ""}
+            >
+              {link.label}
+            </Link>
+          );
+        })}
+    </div>
+  );
+};
+
 /* Mobile student card */
 function MobileCard({ student, onEdit, onDelete, isDeleting }) {
   const name = student.user?.name || "—";
@@ -230,7 +251,15 @@ function MobileCard({ student, onEdit, onDelete, isDeleting }) {
 /* ─── Main Component ─────────────────────────────────────────────────────────── */
 
 function Student() {
-  const { data: students = [], isLoading, isError } = useGetStudentsQuery();
+  const {
+    data: studentsData = null,
+    isLoading,
+    isError,
+  } = useGetStudentsQuery();
+  const students = studentsData?.data?.data ?? [];
+  const studentStats = studentsData?.stats ?? [];
+  const studentPageLinks = studentsData?.data?.links ?? [];
+
   const [deleteStudent, { isLoading: isDeleting, originalArgs: deletingId }] =
     useDeleteStudentMutation();
 
@@ -267,14 +296,12 @@ function Student() {
   /* ── Derived data ── */
   const stats = useMemo(
     () => ({
-      total: (students || []).length,
-      graduated: (students || []).filter((s) => s.status === "graduated")
-        .length,
-      spillover: (students || []).filter((s) => s.status === "spillover")
-        .length,
-      inactive: (students || []).filter((s) => s.status === "inactive").length,
+      total: studentStats?.total || 0,
+      graduated: studentStats?.graduated || 0,
+      spillover: studentStats?.spillover || 0,
+      inactive: studentStats?.inactive || 0,
     }),
-    [students],
+    [studentStats],
   );
 
   const filtered = useMemo(() => {
@@ -328,7 +355,7 @@ function Student() {
             onClick={openAdd}
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white
                        text-sm font-bold rounded-xl hover:bg-indigo-700 active:scale-95
-                       transition-all duration-150 shadow-sm shadow-indigo-200 w-fit
+                       transition-all duration-150 shadow-sm shadow-indigo-200 w-fit cursor-pointer
                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
             aria-label="Add new student"
           >
@@ -394,11 +421,10 @@ function Student() {
                 </select>
                 <FiChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               </div>
-
               {/* Count badge */}
               {!isLoading && (
                 <span className="hidden sm:inline-flex shrink-0 text-xs text-slate-400 font-medium whitespace-nowrap">
-                  {filtered.length} / {students.length}
+                  {filtered.length} / {studentStats.total ?? 0}
                 </span>
               )}
             </div>
@@ -510,7 +536,7 @@ function Student() {
                         </td>
                         {/* Department */}
                         <td className="px-4 py-3.5 text-slate-500 max-w-45 truncate">
-                          {student.user?.department?.name || "—"}
+                          {student.department?.name || "—"}
                         </td>
                         {/* Year */}
                         <td className="px-4 py-3.5 text-slate-500 whitespace-nowrap">
@@ -526,7 +552,7 @@ function Student() {
                         </td>
                         {/* Actions */}
                         <td className="px-4 py-3.5">
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 invisible group-hover:visible transition-opacity duration-150">
                             <button
                               onClick={() => openEdit(student)}
                               aria-label={`Edit ${student.user?.name}`}
@@ -563,12 +589,13 @@ function Student() {
           {/* Footer */}
           {!isLoading && filtered.length > 0 && (
             <div className="px-5 py-3.5 border-t border-slate-100 flex justify-between items-center">
-              <p className="text-xs text-slate-400 font-medium">
+              <div className="text-xs text-slate-400 font-medium">
                 Showing{" "}
                 <strong className="text-slate-600">{filtered.length}</strong> of{" "}
-                <strong className="text-slate-600">{students.length}</strong>{" "}
+                <strong className="text-slate-600">{studentStats.total}</strong>{" "}
                 students
-              </p>
+              </div>
+              <FooterPagination studentPageLinks={studentPageLinks} />
             </div>
           )}
         </div>

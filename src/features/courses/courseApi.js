@@ -38,6 +38,14 @@ export const courseApi = apiSlice.injectEndpoints({
       },
       providesTags: ["CoursesDeptLevel"],
     }),
+    registerCourses: builder.mutation({
+      query: (body) => ({
+        url: `/course/registration`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["StudentRegistrationCourse"],
+    }),
   }),
   overrideExisting: false,
 });
@@ -48,4 +56,5 @@ export const {
   useAddCourseMutation,
   useUpdateCourseMutation,
   useDeleteCourseMutation,
+  useRegisterCoursesMutation,
 } = courseApi;

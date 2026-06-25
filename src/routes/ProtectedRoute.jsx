@@ -27,10 +27,10 @@ function ProtectedRoute({ allowedRoles }) {
     return <Navigate to="/" state={{ from: location }} replace />;
   }
 
-  // // Role check
-  // if (allowedRoles && !allowedRoles.includes(role)) {
-  //   return <Navigate to="/unauthorized" replace />;
-  // }
+  // Role check
+  if (allowedRoles && !allowedRoles.includes(role)) {
+    return <Navigate to="/unauthorized" replace />;
+  }
 
   return <Outlet />;
 }

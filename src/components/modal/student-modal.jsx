@@ -75,17 +75,16 @@ function SelectWrapper({ children, isLoading }) {
 }
 
 function StudentModal({ isOpen, onClose, initialData }) {
+  console.log(initialData);
   const [formData, setFormData] = useState(INITIAL_FORM);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
 
   const isEditMode = Boolean(initialData?.id);
 
-  const [addStudent, { isLoading: isSubmitting, isError, Error }] =
-    useAddStudentMutation();
+  const [addStudent, { isLoading: isSubmitting }] = useAddStudentMutation();
 
-  const [updateStudent, { isError: isUpdateError, Error: updateError }] =
-    useUpdateStudentMutation();
+  const [updateStudent, { isLoading: isUpdating }] = useUpdateStudentMutation();
 
   const { data: faculties = [], isLoading: isFacultiesLoading } =
     useGetFacultiesQuery();
@@ -105,7 +104,7 @@ function StudentModal({ isOpen, onClose, initialData }) {
     if (isOpen) {
       if (initialData?.id) {
         // Map API response data to form structure for edit mode
-        const formData = {
+        const mappedData = {
           user_id: initialData.user?.id || "",
           name: initialData.user?.name || "",
           email: initialData.user?.email || "",
@@ -122,7 +121,7 @@ function StudentModal({ isOpen, onClose, initialData }) {
           faculty_id: initialData.user?.faculty_id || "",
           department_id: initialData.user?.department_id || "",
         };
-        setFormData(formData);
+        setFormData(mappedData);
       } else {
         // Reset to initial form for add mode
         setFormData(INITIAL_FORM);
@@ -241,29 +240,30 @@ function StudentModal({ isOpen, onClose, initialData }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateAll()) {
-      console.log("validation error occured", validateAll());
+    const isValid = validateAll();
+    if (!isValid) {
+      console.log("validation error occured");
       return;
     }
     try {
       if (isEditMode) {
         // For edit mode, send the complete form data
-        await updateStudent({ id: initialData.id, ...formData }).unwrap();
+        await updateStudent({
+          id: initialData.id,
+          ...formData,
+        }).unwrap();
         toast.success("Student updated successfully");
       } else {
-        await addStudent(formData);
+        await addStudent(formData).unwrap();
         toast.success("Student added successfully");
-        console.log("Submitting the form: ", formData);
-        isError &&
-          toast.error("Failed to add student. Please try again:=> ", Error);
       }
+      onClose();
     } catch (error) {
       const status = `(${error.status})`;
       const errormsg = status + ": " + error?.data?.message;
       toast.error(errormsg || "Unknown Error Occured");
       console.log("error occured: ", error?.data || "________");
     }
-    onClose();
   };
 
   if (!isOpen) return null;
@@ -419,7 +419,7 @@ function StudentModal({ isOpen, onClose, initialData }) {
                     <select
                       name="faculty_id"
                       value={formData.faculty_id}
-                      selected={initialData?.user?.faculty_id}
+                      // selected={initialData?.user?.faculty_id} uncomment this line if the selected stopped working.
                       onChange={handleFacultyChange}
                       onBlur={handleBlur}
                       disabled={isFacultiesLoading}
@@ -583,10 +583,10 @@ function StudentModal({ isOpen, onClose, initialData }) {
                 </button>
                 <button
                   type="submit"
-                  // disabled={isSubmitting}
+                  disabled={isSubmitting}
                   className="px-5 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg
                          hover:bg-indigo-700 active:scale-95 transition-all duration-150
-                         disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2 min-w-[90px] justify-center"
+                         disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2 min-w-22.5 justify-center"
                 >
                   {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
                   {isSubmitting

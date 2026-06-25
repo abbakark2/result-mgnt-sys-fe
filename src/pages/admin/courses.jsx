@@ -68,19 +68,19 @@ function Courses() {
     {
       id: 2,
       label: "Active Courses",
-      total: courses.filter((c) => c.status === "Active").length,
+      total: courses.filter((course) => course.status === "Active").length,
       class: "bg-green-100",
     },
     {
       id: 3,
       label: "Inactive Courses",
-      total: courses.filter((c) => c.status === "Inactive").length,
+      total: courses.filter((course) => course.status === "Inactive").length,
       class: "bg-red-100",
     },
     {
       id: 4,
       label: "Departments",
-      total: new Set(courses.map((c) => c.department_id)).size,
+      total: new Set(courses.map((course) => course.department_id)).size,
       class: "bg-yellow-100",
     },
   ];
@@ -186,9 +186,37 @@ function Courses() {
                         {course.department?.name ?? "—"}
                       </td>
                       <td className="px-4 py-3">
-                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                          Active
-                        </span>
+                        <div className="flex items-center gap-3">
+                          {/* Toggle Switch Container */}
+                          <label
+                            htmlFor={`status-${course.id}`}
+                            className="relative inline-flex items-center cursor-pointer select-none"
+                          >
+                            {/* Hidden checkbox that keeps it accessible to screen readers */}
+                            <input
+                              type="checkbox"
+                              name="status"
+                              id={`status-${course.id}`}
+                              checked={course.status === "Active"}
+                              onChange={() => handleStatusChange(course.id)}
+                              className="sr-only peer"
+                            />
+
+                            {/* The Track (Background) */}
+                            <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-500/50 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                          </label>
+
+                          {/* Status Label Pill */}
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-xs font-medium transition-colors duration-200 ${
+                              course.status === "Active"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-red-100 text-red-700"
+                            }`}
+                          >
+                            {course.status}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-4 py-3 rounded-r-lg">
                         <div className="flex gap-2 items-center">

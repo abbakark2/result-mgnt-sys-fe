@@ -4,7 +4,7 @@ export const studentApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getStudents: builder.query({
       query: () => "/admin/students",
-      transformResponse: (res) => res.data ?? [],
+      transformResponse: (res) => res,
       providesTags: ["Students"],
     }),
     getStudent: builder.query({

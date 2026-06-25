@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Avatar from "../../assets/images/avatar.png";
 import { NavLink } from "react-router-dom";
 import { useGetUserQuery } from "../../features/users/userApi";
@@ -18,8 +18,27 @@ function Sidebar() {
   const [academicStructureOpen, setAcademicStructureOpen] = useState(false);
   const [operationStructureOpen, setOperationStructureOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const sidebarRef = useRef(null);
 
   const { data: userData, isLoading, error } = useGetUserQuery();
+
+  // Handle click outside sidebar to close it
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Only close on mobile when sidebar is open
+      if (
+        sidebarRef.current &&
+        !sidebarRef.current.contains(event.target) &&
+        isOpen &&
+        window.innerWidth < 768 // md breakpoint
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen]);
 
   const navItemClass = ({ isActive }) =>
     `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 hover:text-white cursor-pointer hover:translate-x-1
@@ -31,6 +50,15 @@ function Sidebar() {
 
   return (
     <>
+      {/* Mobile backdrop overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 md:hidden z-40 bg-black/50 transition-opacity duration-300"
+          onClick={() => setIsOpen(false)}
+          role="presentation"
+        />
+      )}
+
       {/* Mobile toggle */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -41,6 +69,7 @@ function Sidebar() {
 
       {/* Sidebar */}
       <aside
+        ref={sidebarRef}
         className={`
           fixed top-0 left-0 z-50
           h-screen w-75 overflow-y-auto
@@ -53,7 +82,7 @@ function Sidebar() {
       >
         <button
           onClick={() => setIsOpen(false)}
-          className="text-orange-800 font-extrabold text-xl absolute right-2 top-2 border px-4 py-2 rounded-2xl shadow-lg hover:text-orange-800 hover:bg-gray-100 cursor-pointer"
+          className="md:hidden text-orange-800 font-extrabold text-xl absolute right-2 top-2 border px-4 py-2 rounded-2xl shadow-lg hover:text-orange-800 hover:bg-gray-100 cursor-pointer"
         >
           X
         </button>

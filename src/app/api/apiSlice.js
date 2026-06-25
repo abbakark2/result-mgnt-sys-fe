@@ -27,6 +27,7 @@ export const apiSlice = createApi({
     "Auth",
     "academicSession",
     "CoursesDeptLevel",
+    "Registration",
   ],
   endpoints: () => ({}), // Empty - all endpoints are injected
 });
