@@ -7,11 +7,14 @@ import Search from "../../components/search";
 import Col2 from "../../components/col2";
 import CourseModal from "../../components/modal/course-modal";
 import {
+  useToggleCourseStatusMutation,
   useGetCoursesQuery,
   useDeleteCourseMutation,
 } from "../../features/courses/courseApi";
 
 function Courses() {
+  const [statusData, { isLoading: isToggling }] =
+    useToggleCourseStatusMutation();
   const { data: courses = [], isLoading: isCourseLoading } =
     useGetCoursesQuery();
   const [deleteCourse, { isLoading: isDeleting }] = useDeleteCourseMutation();
@@ -54,6 +57,10 @@ function Courses() {
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const handleToggleStatus = async (id, status) => {
+    statusData({ id, status: status === "Active" ? "Inactive" : "Active" });
   };
 
   // ── Derived stats ─────────────────────────────────────────────────────────
@@ -198,12 +205,14 @@ function Courses() {
                               name="status"
                               id={`status-${course.id}`}
                               checked={course.status === "Active"}
-                              onChange={() => handleStatusChange(course.id)}
+                              onChange={() =>
+                                handleToggleStatus(course.id, course.status)
+                              }
                               className="sr-only peer"
                             />
 
                             {/* The Track (Background) */}
-                            <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-500/50 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                            <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-500/50 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
                           </label>
 
                           {/* Status Label Pill */}

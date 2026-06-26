@@ -2,6 +2,13 @@ import { apiSlice } from "../../app/api/apiSlice";
 
 export const courseApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
+    toggleCourseStatus: builder.mutation({
+      query: ({ id, status }) => ({
+        url: `/courses/${id}/status`,
+        method: "PATCH",
+        body: { status },
+      }),
+    }),
     getCourses: builder.query({
       query: () => "/courses",
       transformResponse: (res) => res.data ?? res,
@@ -51,6 +58,7 @@ export const courseApi = apiSlice.injectEndpoints({
 });
 
 export const {
+  useToggleCourseStatusMutation,
   useGetCoursesQuery,
   useLazyGetCourseByDeptLevelQuery,
   useAddCourseMutation,
