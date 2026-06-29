@@ -9,7 +9,13 @@ export const departmentApi = apiSlice.injectEndpoints({
       ],
     }),
     getDepartments: builder.query({
-      query: () => "/admin/dept",
+      query: (params) => ({
+        url: "/admin/dept",
+        method: "GET",
+        params: {
+          sort: params?.sort || "",
+        },
+      }),
       transformResponse: (res) => res.data ?? [],
       providesTags: ["Departments"],
     }),

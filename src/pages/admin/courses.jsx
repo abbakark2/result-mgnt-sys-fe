@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { FiTrash } from "react-icons/fi";
 import { Loader2 } from "lucide-react";
@@ -13,15 +13,20 @@ import {
 } from "../../features/courses/courseApi";
 
 function Courses() {
-  const [statusData, { isLoading: isToggling }] =
-    useToggleCourseStatusMutation();
-  const { data: courses = [], isLoading: isCourseLoading } =
-    useGetCoursesQuery();
-  const [deleteCourse, { isLoading: isDeleting }] = useDeleteCourseMutation();
-
   const [courseModalOpen, setCourseModalOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [sort, setSort] = useState("newest");
+  const [status, setStatus] = useState("");
+
+  const [statusData, { isLoading: isToggling }] =
+    useToggleCourseStatusMutation();
+  const { data: courses = [], isLoading: isCourseLoading } = useGetCoursesQuery(
+    { search: debouncedSearch, status: status, sort },
+  );
+  const [deleteCourse, { isLoading: isDeleting }] = useDeleteCourseMutation();
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -60,8 +65,26 @@ function Courses() {
   };
 
   const handleToggleStatus = async (id, status) => {
-    statusData({ id, status: status === "Active" ? "Inactive" : "Active" });
+    const newStatus = status === "Active" ? "Inactive" : "Active";
+
+    try {
+      await statusData({
+        id,
+        status: newStatus,
+      }).unwrap();
+      toast.success(`Course status updated to ${newStatus}`);
+    } catch (err) {
+      toast.error(err?.data?.message ?? "Failed to update course status");
+    }
   };
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm]);
 
   // ── Derived stats ─────────────────────────────────────────────────────────
 
@@ -106,7 +129,7 @@ function Courses() {
           </button>
           <button
             onClick={handleAdd}
-            className="px-5 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
+            className="px-5 py-2 rounded-lg bg-linear-to-r from-orange-500 to-red-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
           >
             Add Course ➕
           </button>
@@ -116,16 +139,30 @@ function Courses() {
       {/* Main content */}
       <div className="mt-4 p-4 bg-white rounded-2xl">
         {/* Search + filter row */}
-        <div className="flex justify-between">
-          <Search placeholder="Search Courses" />
+        <div className="flex justify-between gap-5">
+          <Search
+            placeholder="Search Courses"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
           <div className="flex gap-2 items-center">
-            <select className="p-2 bg-peach-50 rounded">
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="p-2 bg-peach-50 border border-gray-300 rounded-lg cursor-pointer focus:outline-emerald-400 hover:outline-emerald-400"
+            >
               <option value="">All Courses</option>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
             </select>
             <div className="flex items-center gap-1 p-2 bg-peach-50 rounded">
-              Sort by:
-              <select>
-                <option value="">Newest</option>
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value)}
+                className="p-2 bg-peach-50 border border-gray-300 rounded-lg cursor-pointer focus:outline-emerald-400 hover:outline-emerald-400"
+              >
+                <option value="newest">Newest</option>
+                <option value="oldest">Oldest</option>
               </select>
             </div>
           </div>

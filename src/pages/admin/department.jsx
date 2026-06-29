@@ -13,10 +13,11 @@ import {
 } from "../../features/departments/departmentApi";
 
 function Department() {
+  const [sort, setSort] = useState("Newest");
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { data, isLoading, error } = useGetDepartmentsQuery();
+  const { data, isLoading, error } = useGetDepartmentsQuery({ sort });
 
   // Ensure departments is always an array
   const departments = data ?? [];
@@ -118,15 +119,23 @@ function Department() {
         <div className="flex justify-between">
           <Search placeholder="Search departments" />
           <div className="flex gap-2 items-center">
-            <select name="" id="" className="p-2 bg-gray-100">
-              <option value="">All Departments</option>
+            <select
+              name=""
+              id=""
+              className="p-2 bg-gray-100 rounded-lg cursor-pointer"
+            >
+              <option value="">All Faculties</option>
             </select>
-            <div className="flex items-center p-2 bg-gray-100">
-              Sort by:
-              <select name="" id="">
-                <option value="">Newest</option>
-              </select>
-            </div>
+            <select
+              name="sort"
+              id="sort"
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              className="p-2 bg-gray-100 rounded-lg cursor-pointer"
+            >
+              <option value="Newest">Newest</option>
+              <option value="oldest">Oldest</option>
+            </select>
           </div>
         </div>
         {/* Stats Row */}

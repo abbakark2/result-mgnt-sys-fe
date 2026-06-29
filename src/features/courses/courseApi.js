@@ -4,13 +4,24 @@ export const courseApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     toggleCourseStatus: builder.mutation({
       query: ({ id, status }) => ({
-        url: `/courses/${id}/status`,
+        url: `/course/${id}/status`,
         method: "PATCH",
         body: { status },
       }),
+      invalidatesTags: ["Courses"],
     }),
     getCourses: builder.query({
-      query: () => "/courses",
+      query: (params) => ({
+        url: "/courses",
+        method: "GET",
+        params: {
+          search: params?.search || "",
+          status: params?.status || "",
+          sort: params?.sort || "",
+          level: params?.level || "",
+          department_id: params?.department_id || "",
+        },
+      }),
       transformResponse: (res) => res.data ?? res,
       providesTags: ["Courses"],
     }),
